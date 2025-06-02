@@ -7,17 +7,31 @@ pub(crate) enum ReceptorMessage{
     /// Stores trigger key and phenotype itself
     /// 
     PhenotypeUpdate(u64, Phenotype),
+
+    ///
+    /// Process died: receptors must clear its' phenotypee
+    ///
+    ProcDead(usize),
 }
 
 ///
 /// Receptor is a detector for harmful agents
+/// It is supposed that it may do asynchronous operations, e.g. querying database,
+/// reading files, calling NPU, etc. so it is marked as async_trait
 ///
+#[async_trait::async_trait]
 pub(crate) trait Receptor{
     ///
     /// Tries to recognize harmful agent from its phenotype
     /// Returns confidence scaled from 0.0 to 1.0
     /// 
-    fn recognize(&mut self, phenotype: &Phenotype) -> f32;
+    async fn recognize(&mut self, phenotype: &Phenotype) -> f32;
+
+    ///
+    /// Called when process dies
+    /// Should clean-up all the data which are associated with process
+    ///
+    async fn on_process_dead(&mut self, pid: usize);
 }
 
 ///
@@ -48,14 +62,17 @@ impl<T: Receptor> ReceptorHolder<T>{
                            continue; 
                         }
                     }
-                    let confidence = self.receptor.recognize(&phenotype);
+                    let confidence = self.receptor.recognize(&phenotype).await;
                     if confidence > self.min_confidence{
                         self.controller_tx.send(
                             ControllerMessage::UnsafeProcDetected(phenotype.pid, confidence))
                             .await
                             .expect("Can not communicate with controller");
                     }
-                } 
+                }
+                ReceptorMessage::ProcDead(pid) => {
+                    self.receptor.on_process_dead(pid).await;
+                }
             }
         }
     }

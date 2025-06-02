@@ -4,9 +4,10 @@ use crate::utils::boxable::Boxed;
 ///
 /// Stores a single update of phenotype key
 /// 
+#[derive(Clone)]
 pub(crate) struct PhenotypeUpdate{
-   key: u64,
-   new_data: Boxed
+   pub key: u64,
+   pub new_data: Boxed
 }
 
 ///

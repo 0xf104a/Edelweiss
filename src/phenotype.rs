@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use crate::{any, sum};
+use crate::collector::PhenotypeUpdate;
 use crate::utils::boxable::{Boxable, Boxed, ByteBox, ByteBoxReader, Unboxable};
 
 ///
@@ -51,5 +52,12 @@ impl Unboxable for Phenotype {
             self.package_name.size_in_boxed_bytes(),
             self.pheno_data.size_in_boxed_bytes(),
         )
+    }
+}
+
+impl Phenotype{
+    #[inline]
+    pub fn on_update(&mut self, update: PhenotypeUpdate){
+        self.pheno_data.insert(update.key, update.new_data);
     }
 }

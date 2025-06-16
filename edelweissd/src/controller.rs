@@ -78,6 +78,7 @@ impl Controller {
         }
     }
     
+    /// Run controller forevers
     pub async fn run(&mut self){
         loop{
             self.tick().await;

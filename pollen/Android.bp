@@ -1,0 +1,9 @@
+bpf {
+    name: "pollenFork.o",
+    include_dirs : ["include"],
+    srcs: ["src/fork_monitor.c"],
+    cflags: [
+        "-Wall",
+        "-Werror",
+    ],
+}

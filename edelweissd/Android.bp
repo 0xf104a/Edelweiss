@@ -1,4 +1,12 @@
 rust_binary {
     name: "edelweissd",
-    srcs: ["src/**/*.rs"],
+    rustlibs: [
+        "libtokio",
+        "liblog_rust",
+    ],
+    proc_macros: [
+        "libasync_trait",
+    ],
+    edition: "2021",
+    srcs: ["src/main.rs",],
 }

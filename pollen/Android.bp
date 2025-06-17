@@ -1,8 +1,9 @@
 bpf {
     name: "pollenFork.o",
-    include_dirs : ["include"],
-    srcs: ["src/fork_monitor.c"],
+    include_dirs : ["external/Edelweiss/pollen/include"],
+    srcs: ["src/forkMonitor.c"],
     cflags: [
+        "-DANDROID",
         "-Wall",
         "-Werror",
     ],

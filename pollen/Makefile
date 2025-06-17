@@ -57,10 +57,10 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/f104a/CLionProjects/Edelweiss/pollen
+CMAKE_SOURCE_DIR = /run/media/f104a/FloraOS/2.0-lycopersicum/external/Edelweiss/pollen
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/f104a/CLionProjects/Edelweiss/pollen
+CMAKE_BINARY_DIR = /run/media/f104a/FloraOS/2.0-lycopersicum/external/Edelweiss/pollen
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -87,9 +87,9 @@ rebuild_cache/fast: rebuild_cache
 
 # The main all target
 all: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/f104a/CLionProjects/Edelweiss/pollen/CMakeFiles /home/f104a/CLionProjects/Edelweiss/pollen//CMakeFiles/progress.marks
+	$(CMAKE_COMMAND) -E cmake_progress_start /run/media/f104a/FloraOS/2.0-lycopersicum/external/Edelweiss/pollen/CMakeFiles /run/media/f104a/FloraOS/2.0-lycopersicum/external/Edelweiss/pollen//CMakeFiles/progress.marks
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/f104a/CLionProjects/Edelweiss/pollen/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /run/media/f104a/FloraOS/2.0-lycopersicum/external/Edelweiss/pollen/CMakeFiles 0
 .PHONY : all
 
 # The main clean target

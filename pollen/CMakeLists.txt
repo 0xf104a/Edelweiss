@@ -6,7 +6,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 # List of eBPF source files
 set(BPF_SOURCES
-        src/fork_monitor.c
+	src/forkMonitor.c
 )
 
 # Generate BPF object names

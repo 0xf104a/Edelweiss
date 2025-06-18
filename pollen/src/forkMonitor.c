@@ -11,24 +11,39 @@
 #include <pollen/pollen.h>
 #include <pollen/fork.h>
 
+#ifdef ANDROID
+struct bpf_map_def SEC("maps") events = {
+	.type = BPF_MAP_TYPE_PERF_EVENT_ARRAY,
+	.key_size = sizeof(int),
+	.value_size = sizeof(fork_event_t),
+	.max_entries = 1<<16,
+};
+#else
 struct {
-    __uint(type, BPF_MAP_TYPE_RINGBUF);
-    __uint(max_entries, 1 << 24); // 16 MB
+    __uint(type, BPF_MAP_TYPE_PERF_EVENT_ARRAY);
+    __uint(key_size, sizeof(int));
+    __uint(value_size, sizeof(fork_event_t));
+    __uint(max_entries, 1<<16);
 } events SEC(".maps");
+#endif
+
 
 SEC("tracepoint/sched/sched_process_fork")
 int handle_fork(struct sched_process_fork_args *ctx) {
-    struct event *evt;
+    fork_event_t evt = {};
 
-    evt = bpf_ringbuf_reserve(&events, sizeof(*evt), 0);
-    if (!evt)
-        return 0;
+    evt.ppid = ctx->parent_pid;
+    evt.pid = ctx->child_pid;
 
-    evt->ppid = ctx->parent_pid;
-    evt->pid = ctx->child_pid;
-
-    bpf_printk("pid=%d, ppid=%d\n", evt->pid, evt->pid);
-    bpf_ringbuf_submit(evt, 0);
+#ifdef bpf_printk
+    bpf_printk("handle_fork: pid=%d, ppid=%d\n", evt.pid, evt.ppid);
+    int ret = POLLEN_SUBMIT(&events, &evt);
+    if (ret){
+       bpf_printk("perf_event_output failed: %d\n", ret);
+    }
+#else
+    POLLEN_SUBMIT(&events, &evt);
+#endif
     return 0;
 }
 

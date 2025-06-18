@@ -3,17 +3,9 @@
 
 #include <linux/bpf.h>
 
-struct fork_event {
+typedef struct fork_event_t {
     __u32 pid;
     __u32 ppid;
-};
-
-struct sched_process_fork_args {
-    __u64 unused;
-    __u32 parent_pid;
-    __u32 parent_tgid;
-    __u32 child_pid;
-    __u32 child_tgid;
-};
+} fork_event_t;
 
 #endif

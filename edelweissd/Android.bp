@@ -7,6 +7,8 @@ rust_binary {
     proc_macros: [
         "libasync_trait",
     ],
+    shared_libs : ["libbpf"],
     edition: "2021",
     srcs: ["src/main.rs",],
+    features: ["android_bpf"],
 }

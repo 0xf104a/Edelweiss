@@ -4,6 +4,7 @@ mod controller;
 mod receptor;
 mod collector;
 mod scanner;
+mod bpf;
 
 ///
 /// Main function

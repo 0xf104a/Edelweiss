@@ -13,17 +13,13 @@
 
 #ifdef ANDROID
 struct bpf_map_def SEC("maps") events = {
-	.type = BPF_MAP_TYPE_PERF_EVENT_ARRAY,
-	.key_size = sizeof(int),
-	.value_size = sizeof(fork_event_t),
-	.max_entries = 1<<16,
-};
+	.type = BPF_MAP_TYPE_RINGBUF,
+	.max_entries = 1<<24, //16MB
+ };
 #else
 struct {
-    __uint(type, BPF_MAP_TYPE_PERF_EVENT_ARRAY);
-    __uint(key_size, sizeof(int));
-    __uint(value_size, sizeof(fork_event_t));
-    __uint(max_entries, 1<<16);
+    __uint(type, BPF_MAP_TYPE_RINGBUF);
+    __uint(max_entries, 1 << 24);
 } events SEC(".maps");
 #endif
 
@@ -37,13 +33,20 @@ int handle_fork(struct sched_process_fork_args *ctx) {
 
 #ifdef bpf_printk
     bpf_printk("handle_fork: pid=%d, ppid=%d\n", evt.pid, evt.ppid);
-    int ret = POLLEN_SUBMIT(&events, &evt);
-    if (ret){
-       bpf_printk("perf_event_output failed: %d\n", ret);
-    }
-#else
-    POLLEN_SUBMIT(&events, &evt);
 #endif
+
+    void *buf = bpf_ringbuf_reserve(&events, sizeof(fork_event_t), 0);
+    if (buf) {
+        __builtin_memcpy(buf, &evt, sizeof(evt));
+        bpf_ringbuf_submit(buf, 0);
+    }
+
+#ifdef bpf_printk
+    if(!buf){
+        bpf_printk("handle_fork: buf is NULL, perhaps bpf_ringbuf_reserve failure\n");
+    }
+#endif
+
     return 0;
 }
 

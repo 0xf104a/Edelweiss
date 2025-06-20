@@ -3,11 +3,12 @@ rust_binary {
     rustlibs: [
         "libtokio",
         "liblog_rust",
+        "liblibc",
     ],
     proc_macros: [
         "libasync_trait",
     ],
-    shared_libs : ["libbpf"],
+    shared_libs : ["libbpf_minimal"],
     edition: "2021",
     srcs: ["src/main.rs",],
     features: ["android_bpf"],

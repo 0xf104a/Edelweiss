@@ -27,7 +27,7 @@ pub(crate) struct RingBufferOpts {
     pub sz: size_t,
 }
 
-#[link(name = "libbpf")]
+#[link(name = "bpf")]
 extern "C" {
     pub fn bpf_obj_get(pathname: *const std::ffi::c_char) -> i32;
     pub fn bpf_attach_tracepoint(progfd: i32, tp_category: *const std::ffi::c_char, tp_name: *const std::ffi::c_char) -> i32;
@@ -38,6 +38,8 @@ extern "C" {
         ctx: *mut std::ffi::c_void,
         opts: *const RingBufferOpts,
     ) -> *mut RingBuffer;
+    
+    pub fn ring_buffer__free(rb: *mut RingBuffer);
 
     pub fn ring_buffer__poll(rb: *mut RingBuffer, timeout_ms: std::ffi::c_int) -> std::ffi::c_int;
 }

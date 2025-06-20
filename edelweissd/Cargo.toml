@@ -9,5 +9,6 @@ async-trait = "0.1.88"
 libc = "0.2.172"
 
 [features]
+default = ["linux_bpf"]
 android_bpf = []
 linux_bpf = []

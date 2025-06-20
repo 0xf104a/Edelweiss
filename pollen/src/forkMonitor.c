@@ -15,12 +15,14 @@
 struct bpf_map_def SEC("maps") events = {
 	.type = BPF_MAP_TYPE_RINGBUF,
 	.max_entries = 1<<24, //16MB
+    .pinning = LIBBPF_PIN_BY_NAME,
  };
 #else
 struct {
     __uint(type, BPF_MAP_TYPE_RINGBUF);
     __uint(max_entries, 1 << 24);
-} events SEC(".maps");
+    __uint(pinning, LIBBPF_PIN_BY_NAME);
+} fork_events SEC(".maps");
 #endif
 
 
@@ -31,17 +33,17 @@ int handle_fork(struct sched_process_fork_args *ctx) {
     evt.ppid = ctx->parent_pid;
     evt.pid = ctx->child_pid;
 
-#ifdef bpf_printk
+#if PRINTK
     bpf_printk("handle_fork: pid=%d, ppid=%d\n", evt.pid, evt.ppid);
 #endif
 
-    void *buf = bpf_ringbuf_reserve(&events, sizeof(fork_event_t), 0);
+    void *buf = bpf_ringbuf_reserve(&fork_events, sizeof(fork_event_t), 0);
     if (buf) {
         __builtin_memcpy(buf, &evt, sizeof(evt));
         bpf_ringbuf_submit(buf, 0);
     }
 
-#ifdef bpf_printk
+#if PRINTK
     if(!buf){
         bpf_printk("handle_fork: buf is NULL, perhaps bpf_ringbuf_reserve failure\n");
     }

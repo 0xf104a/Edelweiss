@@ -34,4 +34,13 @@ struct sched_process_fork_args {
 static long (* const bpf_perf_event_output)(void *ctx, void *map, __u64 flags, void *data, __u64 size) = (void *) 25;
 #endif
 
+/**
+ * Android considered production env, so no use from printk there
+ */
+#ifdef ANDROID
+#define PRINTK 0
+#else
+#define PRINTK 1
+#endif
+
 #endif //POLLEN_H

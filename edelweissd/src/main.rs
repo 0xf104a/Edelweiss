@@ -1,3 +1,5 @@
+use crate::scanner::Scanner;
+
 mod phenotype;
 mod utils;
 mod controller;
@@ -12,5 +14,7 @@ mod bpf;
 /// 
 #[tokio::main]
 async fn main() {
-    todo!()
+    unsafe {
+        Scanner::run();
+    }
 }

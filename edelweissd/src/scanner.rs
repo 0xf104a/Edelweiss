@@ -57,13 +57,9 @@ impl Scanner{
         if map_fd == 0{
             panic!("bpf_obj_get failed on map");
         }
-        /* Attach the program to the tracepoint(AOSP) */
-        #[cfg(feature = "android_bpf")] /* See: https://source.android.com/docs/core/architecture/kernel/bpf?hl=en */
-        {
-            let ret = bpf::bpf_attach_tracepoint(prog_fd, category.as_ptr(), point.as_ptr());
-            println!("bpf_attach_tracepoint ret={}", ret);
-            std::thread::sleep(std::time::Duration::from_secs(5));
-        }
+        let ret = bpf::bpf_program__attach_tracepoint(prog_fd, category.as_ptr(), point.as_ptr());
+        println!("bpf_attach_tracepoint ret={}", ret);
+        std::thread::sleep(std::time::Duration::from_secs(5));
         
         let rb = bpf::ring_buffer__new(map_fd, Some(Scanner::handle_event), null_mut(), null());
         println!("Start epoll");

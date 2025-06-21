@@ -17,6 +17,11 @@ pub(crate) struct Scanner{
     r_buffer: RingBuffer,
 }
 
+#[cfg(feature = "linux_bpf")]
+const BPF_PATH: &str = "/sys/fs/bpf/fork_events";
+#[cfg(feature = "android_bpf")]
+const BPF_PATH: &str = "/sys/fs/bpf/map_forkMonitor_fork_events";
+
 
 
 impl Scanner{
@@ -36,13 +41,13 @@ impl Scanner{
     }
     
     pub unsafe fn run() {
-        let path = CString::new("/sys/fs/bpf/fork_events").expect("CString::new failed");
+        let path = CString::new(BPF_PATH).expect("CString::new failed");
         let fd = bpf::bpf_obj_get(path.as_ptr());
         if fd == 0{
             panic!("bpf_obj_get failed");
         }
         let rb = bpf::ring_buffer__new(fd, Some(Scanner::handle_event), null_mut(), null());
-        
+        println!("Start epoll");
         loop {
             let err = ring_buffer__poll(rb, -1);
             if err < 0 && err != -libc::EINTR {
@@ -50,7 +55,9 @@ impl Scanner{
             } else if err == libc::EINTR { 
                 break;
             }
+            println!("Poll err=#{err}");
         }
+        println!("Loop terminated");
         bpf::ring_buffer__free(rb);
         close(fd);
     }

@@ -18,9 +18,13 @@ pub(crate) struct Scanner{
 }
 
 #[cfg(feature = "linux_bpf")]
-const BPF_PATH: &str = "/sys/fs/bpf/fork_events";
+const BPF_MAP_PATH: &str = "/sys/fs/bpf/fork_events";
 #[cfg(feature = "android_bpf")]
-const BPF_PATH: &str = "/sys/fs/bpf/map_forkMonitor_fork_events";
+const BPF_MAP_PATH: &str = "/sys/fs/bpf/map_forkMonitor_fork_events";
+#[cfg(feature = "linux_bpf")]
+const BPF_TP_PROG_PATH: &str = "/sys/fs/bpf/pollenFork";
+#[cfg(feature = "android_bpf")]
+const BPF_TP_PROG_PATH: &str = "/sys/fs/bpf/prog_forkMonitor_tracepoint_sched_sched_process_fork";
 
 
 
@@ -41,12 +45,27 @@ impl Scanner{
     }
     
     pub unsafe fn run() {
-        let path = CString::new(BPF_PATH).expect("CString::new failed");
-        let fd = bpf::bpf_obj_get(path.as_ptr());
-        if fd == 0{
-            panic!("bpf_obj_get failed");
+        let prog_path = CString::new(BPF_TP_PROG_PATH).expect("CString::new failed");
+        let map_path = CString::new(BPF_MAP_PATH).expect("CString::new failed");
+        let category = CString::new("sched").expect("CString::new failed");
+        let point = CString::new("sched_process_fork").expect("CString::new failed");
+        let prog_fd = bpf::bpf_obj_get(prog_path.as_ptr());
+        if prog_fd == 0{
+            panic!("bpf_obj_get failed on prog");
         }
-        let rb = bpf::ring_buffer__new(fd, Some(Scanner::handle_event), null_mut(), null());
+        let map_fd = bpf::bpf_obj_get(map_path.as_ptr());
+        if map_fd == 0{
+            panic!("bpf_obj_get failed on map");
+        }
+        /* Attach the program to the tracepoint(AOSP) */
+        #[cfg(feature = "android_bpf")] /* See: https://source.android.com/docs/core/architecture/kernel/bpf?hl=en */
+        {
+            let ret = bpf::bpf_attach_tracepoint(prog_fd, category.as_ptr(), point.as_ptr());
+            println!("bpf_attach_tracepoint ret={}", ret);
+            std::thread::sleep(std::time::Duration::from_secs(5));
+        }
+        
+        let rb = bpf::ring_buffer__new(map_fd, Some(Scanner::handle_event), null_mut(), null());
         println!("Start epoll");
         loop {
             let err = ring_buffer__poll(rb, -1);
@@ -59,6 +78,6 @@ impl Scanner{
         }
         println!("Loop terminated");
         bpf::ring_buffer__free(rb);
-        close(fd);
+        close(map_fd);
     }
 }

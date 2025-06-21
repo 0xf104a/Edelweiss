@@ -38,7 +38,7 @@ SEC("tracepoint/sched/sched_process_fork") int tracepoint_sched_process_fork
     evt.pid = ctx->child_pid;
 
 #if PRINTK
-    bpf_trace_printk("handle_fork: pid=%d, ppid=%d\n", evt.pid, evt.ppid);
+    bpf_printk("handle_fork: pid=%d, ppid=%d\n", evt.pid, evt.ppid);
 #endif
 
     void *buf = bpf_ringbuf_reserve(&fork_events, sizeof(fork_event_t), 0);
@@ -49,7 +49,7 @@ SEC("tracepoint/sched/sched_process_fork") int tracepoint_sched_process_fork
 
 #if PRINTK
     if(!buf){
-        bpf_trace_printk("handle_fork: buf is NULL, perhaps bpf_ringbuf_reserve failure\n");
+        bpf_printk("handle_fork: buf is NULL, perhaps bpf_ringbuf_reserve failure\n");
     }
 #endif
 

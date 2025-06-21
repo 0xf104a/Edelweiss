@@ -69,6 +69,13 @@ static void (* const bpf_ringbuf_submit)(void *data, __u64 flags) = (void *) 132
 static void *(* const bpf_ringbuf_reserve)(void *ringbuf, __u64 size, __u64 flags) = (void *) 131;
 
 static long (* const bpf_trace_printk)(const char *fmt, __u32 fmt_size, ...) = (void *) 6;
+
+#define bpf_printk(fmt, ...)                                       \
+    ({                                                             \
+        char ____fmt[] = fmt;                                      \
+        bpf_trace_printk(____fmt, sizeof(____fmt), ##__VA_ARGS__); \
+    })
+
 #endif
 
 /**

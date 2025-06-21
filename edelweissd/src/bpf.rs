@@ -44,3 +44,9 @@ extern "C" {
     pub fn ring_buffer__poll(rb: *mut RingBuffer, timeout_ms: std::ffi::c_int) -> std::ffi::c_int;
 }
 
+#[cfg(feature = "android_bpf")]
+#[link(name = "bpf_bcc")]
+extern "C" {
+    pub fn bpf_attach_tracepoint(progfd: i32, tp_category: *const std::ffi::c_char, tp_name: *const std::ffi::c_char) -> i32;
+}
+

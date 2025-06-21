@@ -57,10 +57,13 @@ impl Scanner{
         if map_fd == 0{
             panic!("bpf_obj_get failed on map");
         }
+        #[cfg(feature = "linux_bpf")] /* Vanilla linux has this */
         let ret = bpf::bpf_program__attach_tracepoint(prog_fd, category.as_ptr(), point.as_ptr());
+        #[cfg(feature = "android_bpf")] /* But AOSP relies on bcc */
+        let ret = bpf::bpf_attach_tracepoint(prog_fd, category.as_ptr(), point.as_ptr());
         println!("bpf_attach_tracepoint ret={}", ret);
         std::thread::sleep(std::time::Duration::from_secs(5));
-        
+
         let rb = bpf::ring_buffer__new(map_fd, Some(Scanner::handle_event), null_mut(), null());
         println!("Start epoll");
         loop {

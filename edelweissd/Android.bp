@@ -9,8 +9,8 @@ rust_binary {
         "libasync_trait",
     ],
     shared_libs : [
-        "libbpf_minimal",
         "libbpf_bcc",
+        "libbpf_minimal",
     ],
     edition: "2021",
     srcs: ["src/main.rs",],

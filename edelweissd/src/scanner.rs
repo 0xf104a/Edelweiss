@@ -9,8 +9,6 @@ struct ForkEvent{
 
 use std::ffi::CString;
 use std::ptr::{null, null_mut};
-#[cfg(feature = "android_bpf")]
-use libc::{bpf, BPF_OBJ_GET, BPF_PROG_ATTACH, BPF_TRACEPOINT};
 use libc::close;
 use crate::bpf;
 use crate::bpf::{ring_buffer__new, ring_buffer__poll, RingBuffer};
@@ -37,7 +35,6 @@ impl Scanner{
         0
     }
     
-    #[cfg(feature = "linux_bpf")]
     pub unsafe fn run() {
         let path = CString::new("/sys/fs/bpf/fork_events").expect("CString::new failed");
         let fd = bpf::bpf_obj_get(path.as_ptr());
@@ -56,10 +53,5 @@ impl Scanner{
         }
         bpf::ring_buffer__free(rb);
         close(fd);
-    }
-
-    #[cfg(feature = "android_bpf")]
-    pub unsafe fn run(){
-
     }
 }

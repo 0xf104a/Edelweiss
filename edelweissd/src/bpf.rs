@@ -44,5 +44,3 @@ extern "C" {
     pub fn ring_buffer__poll(rb: *mut RingBuffer, timeout_ms: std::ffi::c_int) -> std::ffi::c_int;
 }
 
-
-

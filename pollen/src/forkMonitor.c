@@ -12,11 +12,12 @@
 #include <pollen/fork.h>
 
 #ifdef ANDROID
-struct bpf_map_def SEC("maps") events = {
+struct bpf_map_def SEC("maps") fork_events = {
 	.type = BPF_MAP_TYPE_RINGBUF,
 	.max_entries = 1<<24, //16MB
-    .pinning = LIBBPF_PIN_BY_NAME,
- };
+	.min_kver = 0x0,
+	.max_kver = 0xffffffff,
+};
 #else
 struct {
     __uint(type, BPF_MAP_TYPE_RINGBUF);
@@ -25,9 +26,12 @@ struct {
 } fork_events SEC(".maps");
 #endif
 
-
-SEC("tracepoint/sched/sched_process_fork")
-int handle_fork(struct trace_event_raw_sched_process_fork *ctx) {
+#ifdef ANDROID
+DEFINE_BPF_PROG("tracepoint/sched/sched_process_fork", AID_ROOT, AID_SYSTEM, tracepoint_sched_process_fork)
+#else
+SEC("tracepoint/sched/sched_process_fork") int tracepoint_sched_process_fork
+#endif
+(struct trace_event_raw_sched_process_fork *ctx) {
     fork_event_t evt = {};
 
     evt.ppid = ctx->pid;

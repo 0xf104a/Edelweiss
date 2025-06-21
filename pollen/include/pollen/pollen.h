@@ -30,12 +30,43 @@ struct trace_event_raw_sched_process_fork {
     char child_comm[TASK_COMM_LEN];
     __u32 child_pid;
 };
+
+#ifdef ANDROID //Android does not have those functions in headers
 /**
  *  Perf event output function
  *  @see https://docs.ebpf.io/linux/helper-function/bpf_perf_event_output/
  */
-#ifdef ANDROID //Android does not have those functions in headers
 static long (* const bpf_perf_event_output)(void *ctx, void *map, __u64 flags, void *data, __u64 size) = (void *) 25;
+
+/*
+ * bpf_ringbuf_submit
+ *
+ * 	Submit reserved ring buffer sample, pointed to by *data*.
+ * 	If **BPF_RB_NO_WAKEUP** is specified in *flags*, no notification
+ * 	of new data availability is sent.
+ * 	If **BPF_RB_FORCE_WAKEUP** is specified in *flags*, notification
+ * 	of new data availability is sent unconditionally.
+ * 	If **0** is specified in *flags*, an adaptive notification
+ * 	of new data availability is sent.
+ *
+ * 	See 'bpf_ringbuf_output()' for the definition of adaptive notification.
+ *
+ * Returns
+ * 	Nothing. Always succeeds.
+ */
+static void (* const bpf_ringbuf_submit)(void *data, __u64 flags) = (void *) 132;
+
+/*
+ * bpf_ringbuf_reserve
+ *
+ * 	Reserve *size* bytes of payload in a ring buffer *ringbuf*.
+ * 	*flags* must be 0.
+ *
+ * Returns
+ * 	Valid pointer with *size* bytes of memory available; NULL,
+ * 	otherwise.
+ */
+static void *(* const bpf_ringbuf_reserve)(void *ringbuf, __u64 size, __u64 flags) = (void *) 131;
 #endif
 
 /**

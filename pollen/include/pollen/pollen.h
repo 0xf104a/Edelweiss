@@ -13,19 +13,23 @@
 #define SEC(NAME) __attribute__((section(NAME), used)) /* define our own SEC macro */
 #endif
 
+#ifndef TASK_COMM_LEN
+/* We do not have TASK_COMM_LEN, fallback to default */
+#define TASK_COMM_LEN 16
+#endif
+
 /* Helper macro to submit event to perf array */
 #define POLLEN_PERF_SUBMIT(array, event) \
 	bpf_perf_event_output(ctx, array, BPF_F_CURRENT_CPU, event, sizeof(event));
 
 /* Process fork */
-struct sched_process_fork_args {
+struct trace_event_raw_sched_process_fork {
     __u64 unused;
-    __u32 parent_pid;
-    __u32 parent_tgid;
+     char parent_comm[TASK_COMM_LEN];
+    __u32 pid;
+    char child_comm[TASK_COMM_LEN];
     __u32 child_pid;
-    __u32 child_tgid;
 };
-
 /**
  *  Perf event output function
  *  @see https://docs.ebpf.io/linux/helper-function/bpf_perf_event_output/

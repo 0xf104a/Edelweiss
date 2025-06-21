@@ -27,10 +27,10 @@ struct {
 
 
 SEC("tracepoint/sched/sched_process_fork")
-int handle_fork(struct sched_process_fork_args *ctx) {
+int handle_fork(struct trace_event_raw_sched_process_fork *ctx) {
     fork_event_t evt = {};
 
-    evt.ppid = ctx->parent_pid;
+    evt.ppid = ctx->pid;
     evt.pid = ctx->child_pid;
 
 #if PRINTK

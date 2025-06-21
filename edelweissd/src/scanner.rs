@@ -33,13 +33,13 @@ impl Scanner{
         }
 
         let event = &*(data as *const ForkEvent);
-        println!("🧵 Fork: PID={}, PPID={}", event.pid, event.ppid);
+        println!("Fork: PID={}, PPID={}", event.pid, event.ppid);
         0
     }
     
     #[cfg(feature = "linux_bpf")]
     pub unsafe fn run() {
-        let path = CString::new("/sys/fs/bpf/events").expect("CString::new failed");
+        let path = CString::new("/sys/fs/bpf/fork_events").expect("CString::new failed");
         let fd = bpf::bpf_obj_get(path.as_ptr());
         if fd == 0{
             panic!("bpf_obj_get failed");

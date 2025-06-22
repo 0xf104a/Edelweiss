@@ -1,8 +1,9 @@
 /**
  * The ForkEvent sent by forkMonitor eBPF program
  */
+#[derive(Clone, Debug)]
 #[repr(C)]
-struct ForkEvent{
+pub(crate) struct ForkEvent{
     pid: u32,
     ppid: u32,
 }
@@ -12,71 +13,52 @@ use std::ptr::{null, null_mut};
 use libc::close;
 use crate::bpf;
 use crate::bpf::{ring_buffer__new, ring_buffer__poll, RingBuffer};
+use crate::bpf::ringbuf::RingBufferStreamer;
 
 pub(crate) struct Scanner{
     r_buffer: RingBuffer,
 }
 
 #[cfg(feature = "linux_bpf")]
-const BPF_MAP_PATH: &str = "/sys/fs/bpf/fork_events";
+pub(crate) const BPF_MAP_PATH: &str = "/sys/fs/bpf/fork_events";
 #[cfg(feature = "android_bpf")]
-const BPF_MAP_PATH: &str = "/sys/fs/bpf/map_forkMonitor_fork_events";
+pub(crate) const BPF_MAP_PATH: &str = "/sys/fs/bpf/map_forkMonitor_fork_events";
 #[cfg(feature = "linux_bpf")]
-const BPF_TP_PROG_PATH: &str = "/sys/fs/bpf/pollenFork";
+pub(crate) const BPF_TP_PROG_PATH: &str = "/sys/fs/bpf/pollenFork";
 #[cfg(feature = "android_bpf")]
-const BPF_TP_PROG_PATH: &str = "/sys/fs/bpf/prog_forkMonitor_tracepoint_sched_sched_process_fork";
+pub(crate) const BPF_TP_PROG_PATH: &str = "/sys/fs/bpf/prog_forkMonitor_tracepoint_sched_sched_process_fork";
 
+const BPF_TP_CATEGORY: &str = "sched";
+const BPF_TP_NAME: &str = "sched_process_fork";
 
+/// Process filter trait. Used by scanner to filter out processes which are not for inspection
+/// like systemd on Linux or system processes on AOSP
+pub(crate) trait ProcFilter{
+    fn filter(&self, event: ForkEvent) -> bool;
+}
 
-impl Scanner{
-    pub unsafe extern "C" fn handle_event(
-        _ctx: *mut std::ffi::c_void,
-        data: *mut std::ffi::c_void,
-        data_sz: libc::size_t,
-    ) -> std::ffi::c_int {
-        if data_sz < std::mem::size_of::<ForkEvent>() {
-            eprintln!("Event too small ({} bytes)", data_sz);
-            return 0;
+pub(crate) struct ProcScanner<T: ProcFilter>{
+    filter: T,
+    streamer: RingBufferStreamer<ForkEvent, tokio::sync::mpsc::Sender<ForkEvent>>,
+    rx: tokio::sync::mpsc::Receiver<ForkEvent>,
+}
+
+impl<T: ProcFilter> ProcScanner<T> {
+    pub fn new(filter: T) -> Self{
+        let (tx, rx) = tokio::sync::mpsc::channel(65536);
+        Self{
+            filter,
+            rx,
+            streamer: RingBufferStreamer::<ForkEvent, tokio::sync::mpsc::Sender<ForkEvent>>::new(
+                BPF_TP_PROG_PATH.to_string(), 
+                BPF_MAP_PATH.to_string(), 
+                BPF_TP_CATEGORY.to_string(), 
+                BPF_TP_NAME.to_string(),
+                tx),
         }
-
-        let event = &*(data as *const ForkEvent);
-        println!("Fork: PID={}, PPID={}", event.pid, event.ppid);
-        0
     }
     
-    pub unsafe fn run() {
-        let prog_path = CString::new(BPF_TP_PROG_PATH).expect("CString::new failed");
-        let map_path = CString::new(BPF_MAP_PATH).expect("CString::new failed");
-        let category = CString::new("sched").expect("CString::new failed");
-        let point = CString::new("sched_process_fork").expect("CString::new failed");
-        let prog_fd = bpf::bpf_obj_get(prog_path.as_ptr());
-        if prog_fd == 0{
-            panic!("bpf_obj_get failed on prog");
-        }
-        let map_fd = bpf::bpf_obj_get(map_path.as_ptr());
-        if map_fd == 0{
-            panic!("bpf_obj_get failed on map");
-        }
-        #[cfg(feature = "linux_bpf")] /* Vanilla linux has this */
-        let ret = bpf::bpf_program__attach_tracepoint(prog_fd, category.as_ptr(), point.as_ptr());
-        #[cfg(feature = "android_bpf")] /* But AOSP relies on bcc */
-        let ret = bpf::bpf_attach_tracepoint(prog_fd, category.as_ptr(), point.as_ptr());
-        println!("bpf_attach_tracepoint ret={}", ret);
-        std::thread::sleep(std::time::Duration::from_secs(5));
-
-        let rb = bpf::ring_buffer__new(map_fd, Some(Scanner::handle_event), null_mut(), null());
-        println!("Start epoll");
-        loop {
-            let err = ring_buffer__poll(rb, -1);
-            if err < 0 && err != -libc::EINTR {
-                panic!("ring_buffer__poll failed({err})");
-            } else if err == libc::EINTR { 
-                break;
-            }
-            println!("Poll err=#{err}");
-        }
-        println!("Loop terminated");
-        bpf::ring_buffer__free(rb);
-        close(map_fd);
+    pub async fn scan(&mut self){
+        
     }
 }

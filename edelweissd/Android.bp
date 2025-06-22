@@ -4,6 +4,10 @@ rust_binary {
         "libtokio",
         "liblog_rust",
         "liblibc",
+        "libfutures",
+        "libonce_cell",
+        "liblog_rust",
+        "libandroid_logger",
     ],
     proc_macros: [
         "libasync_trait",
@@ -14,5 +18,5 @@ rust_binary {
     ],
     edition: "2021",
     srcs: ["src/main.rs",],
-    features: ["android_bpf"],
+    features: ["android_bpf", "android_logging"],
 }

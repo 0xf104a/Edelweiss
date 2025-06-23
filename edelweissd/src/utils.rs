@@ -1,6 +1,6 @@
 pub mod boxable;
 pub mod tokio;
-mod startable;
+pub mod startable;
 
 #[macro_export]
 macro_rules! any {

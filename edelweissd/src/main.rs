@@ -3,6 +3,7 @@ use crate::bpf::RingBuffer;
 use crate::bpf::streamer::Streamer;
 use crate::scanner::{ForkEvent, ProcScanner, Process, BPF_MAP_PATH, BPF_TP_PROG_PATH};
 use crate::scanner::filter::default::DefaultFilter;
+use crate::utils::startable::Starter;
 
 mod phenotype;
 mod utils;
@@ -58,8 +59,8 @@ async fn main() {
     setup_android_logging();
     log::info!("Starting edelweissd");
     let (tx, mut rx) = tokio::sync::mpsc::channel::<Process>(65536);
-    let mut scanner = ProcScanner::new(DefaultFilter::new(), tx);
-    ProcScanner::start(scanner);
+    let scanner = ProcScanner::new(DefaultFilter::new(), tx);
+    Starter::start(scanner);
     loop{
         log::trace!("event = {:?}", rx.recv().await);
     }

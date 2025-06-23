@@ -17,6 +17,7 @@ use crate::bpf;
 use crate::bpf::{ring_buffer__new, ring_buffer__poll, RingBuffer};
 use crate::bpf::ringbuf::RingBufferStreamer;
 use crate::bpf::streamer::Streamer;
+use crate::utils::startable::Startable;
 use crate::utils::tokio::{init_tokio, tokio_block_on};
 
 #[cfg(feature = "linux_bpf")]
@@ -85,11 +86,10 @@ impl<T: ProcFilter + 'static> ProcScanner<T> {
             }
         }
     }
+}
 
-    pub fn start(mut my_self: ProcScanner<T>){
-        std::thread::spawn(move || {
-            init_tokio();
-            tokio_block_on(my_self.scan());
-        });
+impl<T: ProcFilter + 'static> Startable for ProcScanner<T>{
+    fn run(&mut self) {
+        tokio_block_on(self.scan());
     }
 }

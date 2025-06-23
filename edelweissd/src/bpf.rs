@@ -17,6 +17,7 @@ pub(crate) struct Ring {
 }
 
 #[repr(C)]
+#[derive(Clone)]
 pub(crate) struct RingBuffer {
     pub events: *mut epoll_event,
     pub rings: *mut *mut Ring,

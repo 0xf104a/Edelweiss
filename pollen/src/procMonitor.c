@@ -11,20 +11,7 @@
 #include <pollen/pollen.h>
 #include <pollen/proc.h>
 
-#ifdef ANDROID
-struct bpf_map_def SEC("maps") proc_events = {
-	.type = BPF_MAP_TYPE_RINGBUF,
-	.max_entries = 1<<24, //16MB
-	.min_kver = 0x0,
-	.max_kver = 0xffffffff,
-};
-#else
-struct {
-    __uint(type, BPF_MAP_TYPE_RINGBUF);
-    __uint(max_entries, 1 << 24);
-    __uint(pinning, LIBBPF_PIN_BY_NAME);
-} proc_events SEC(".maps");
-#endif
+POLLEN_DEFINE_RINGBUF(proc_events, 1 << 24);
 
 #ifdef ANDROID
 DEFINE_BPF_PROG("tracepoint/sched/sched_process_fork", AID_ROOT, AID_SYSTEM, tracepoint_sched_process_fork)
@@ -72,7 +59,7 @@ SEC("tracepoint/sched/sched_process_exit") int tracepoint_sched_process_exit
     evt.ppid = 0;
     evt.pid = pid;
 
-    void *buf = bpf_ringbuf_reserve(&proc_events, sizeof(proc_event_t), 0);
+    void* buf = bpf_ringbuf_reserve(&proc_events, sizeof(proc_event_t), 0);
     if (buf) {
         __builtin_memcpy(buf, &evt, sizeof(evt));
         bpf_ringbuf_submit(buf, 0);

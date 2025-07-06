@@ -5,6 +5,7 @@
 #ifndef POLLEN_H
 #define POLLEN_H
 
+#include <linux/sched.h>
 #include <linux/bpf.h>
 
 #define POLLEN_TRACE_TAG "pollen" /* common tag for bpf_printk */
@@ -87,6 +88,26 @@ static __u64 (* const bpf_get_current_pid_tgid)(void) = (void *) 14;
         bpf_trace_printk(____fmt, sizeof(____fmt), ##__VA_ARGS__); \
     })
 #endif
+#endif
+
+/**
+ * A macro to define ringbuf of given name and size
+ */
+#ifdef ANDROID
+#define POLLEN_DEFINE_RINGBUF(name, size) \
+struct bpf_map_def SEC("maps") name = { \
+	.type = BPF_MAP_TYPE_RINGBUF, \
+	.max_entries = size, \
+	.min_kver = 0x0, \
+	.max_kver = 0xffffffff, \
+};
+#else
+#define POLLEN_DEFINE_RINGBUF(name, size) \
+struct { \
+    __uint(type, BPF_MAP_TYPE_RINGBUF); \
+    __uint(max_entries, size); \
+    __uint(pinning, LIBBPF_PIN_BY_NAME); \
+} name SEC(".maps");
 #endif
 
 /**

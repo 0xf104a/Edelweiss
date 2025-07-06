@@ -8,3 +8,15 @@ bpf {
         "-Werror",
     ],
 }
+
+bpf {
+    name: "pollen_netMonitor.o",
+    include_dirs : ["external/Edelweiss/pollen/include"],
+    srcs: ["src/netMonitor.c"],
+    cflags: [
+        "-DANDROID",
+        "-Wall",
+        "-Werror",
+    ],
+}
+

@@ -3,20 +3,6 @@
 version = 4
 
 [[package]]
-name = "Edelweiss"
-version = "0.1.0"
-dependencies = [
- "android_log",
- "async-trait",
- "env_logger",
- "futures",
- "libc",
- "log 0.4.27",
- "once_cell",
- "tokio",
-]
-
-[[package]]
 name = "addr2line"
 version = "0.24.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -164,6 +150,20 @@ name = "colorchoice"
 version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b05b61dc5112cbb17e4b6cd61790d9845d13888356391624cbe7e41efeac1e75"
+
+[[package]]
+name = "edelweissd"
+version = "0.1.0"
+dependencies = [
+ "android_log",
+ "async-trait",
+ "env_logger",
+ "futures",
+ "libc",
+ "log 0.4.27",
+ "once_cell",
+ "tokio",
+]
 
 [[package]]
 name = "env_filter"

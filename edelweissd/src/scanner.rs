@@ -10,13 +10,9 @@ pub(crate) struct ForkEvent{
     ppid: u32,
 }
 
-use std::ffi::CString;
-use std::ptr::{null, null_mut};
-use libc::close;
-use crate::bpf;
-use crate::bpf::{ring_buffer__new, ring_buffer__poll, RingBuffer};
 use crate::bpf::ringbuf::RingBufferStreamer;
 use crate::bpf::streamer::Streamer;
+use crate::utils::notifier::AsyncNotifier;
 use crate::utils::startable::Startable;
 use crate::utils::tokio::{init_tokio, tokio_block_on};
 
@@ -35,13 +31,14 @@ const BPF_TP_NAME: &str = "sched_process_fork";
 /// Process filter trait. Used by scanner to filter out processes which are not for inspection
 /// like systemd on Linux or system processes on AOSP
 pub(crate) trait ProcFilter: Send + Sync{
+    /// Returns true if event should pass and false otherwise
     fn filter(&self, event: ForkEvent) -> bool;
 }
 
 #[derive(Debug)]
 pub(crate) struct Process{
-    pid: u32,
-    parent_pid: u32,
+    pub pid: u32,
+    pub parent_pid: u32,
 }
 
 impl Process{
@@ -53,20 +50,20 @@ impl Process{
     }
 }
 
-pub(crate) struct ProcScanner<T: ProcFilter>{
+pub(crate) struct ProcScanner<T: ProcFilter, N: AsyncNotifier<Process>>{
     filter: T,
     streamer: RingBufferStreamer<ForkEvent, tokio::sync::mpsc::Sender<ForkEvent>>,
     rx: tokio::sync::mpsc::Receiver<ForkEvent>,
-    tx: tokio::sync::mpsc::Sender<Process>,
+    notifier: N,
 }
 
-impl<T: ProcFilter + 'static> ProcScanner<T> {
-    pub fn new(filter: T, sender: tokio::sync::mpsc::Sender<Process>) -> Self{
+impl<T: ProcFilter + 'static, N: AsyncNotifier<Process> + 'static> ProcScanner<T, N> {
+    pub fn new(filter: T, notifier: N) -> Self{
         let (tx, rx) = tokio::sync::mpsc::channel(65536);
         Self{
             filter,
             rx,
-            tx: sender,
+            notifier,
             streamer: RingBufferStreamer::<ForkEvent, tokio::sync::mpsc::Sender<ForkEvent>>::new(
                 BPF_TP_PROG_PATH.to_string(), 
                 BPF_MAP_PATH.to_string(), 
@@ -82,13 +79,13 @@ impl<T: ProcFilter + 'static> ProcScanner<T> {
             let proc =  Process::new(event.pid,
                                      event.ppid);
             if self.filter.filter(event){
-                self.tx.send(proc).await.expect("Can not send process info");
+                self.notifier.notify(proc).await;
             }
         }
     }
 }
 
-impl<T: ProcFilter + 'static> Startable for ProcScanner<T>{
+impl<T: ProcFilter + 'static, N: AsyncNotifier<Process> + 'static> Startable for ProcScanner<T, N>{
     fn run(&mut self) {
         tokio_block_on(self.scan());
     }

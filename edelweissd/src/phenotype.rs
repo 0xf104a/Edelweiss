@@ -57,6 +57,15 @@ impl Unboxable for Phenotype {
 
 impl Phenotype{
     #[inline]
+    pub fn new(pid: usize, package_name: String) -> Self{
+        Self{
+            pid,
+            package_name,
+            pheno_data: HashMap::new()
+        }
+    }
+    
+    #[inline]
     pub fn on_update(&mut self, update: PhenotypeUpdate){
         self.pheno_data.insert(update.key, update.new_data);
     }

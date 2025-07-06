@@ -3,7 +3,9 @@ use tokio::net::lookup_host;
 use crate::collector::PhenotypeUpdate;
 use crate::phenotype::Phenotype;
 use crate::receptor::ReceptorMessage;
+use crate::scanner::Process;
 use crate::utils::boxable::Boxed;
+use crate::utils::notifier::AsyncNotifier;
 
 ///
 /// A message controller may receive
@@ -15,6 +17,8 @@ pub(crate) enum ControllerMessage{
     UnsafeProcDetected(usize, f32),
     /// Process died <pid>
     ProcDead(usize),
+    /// New process detected
+    NewProc(Process),
 }
 
 ///
@@ -28,6 +32,16 @@ pub(crate) struct Controller {
 }
 
 impl Controller {
+    #[inline]
+    pub fn new() -> Self{
+        let (tx, rx) = tokio::sync::mpsc::channel::<ControllerMessage>(65536);
+        Controller{
+            tx, rx,
+            pid_to_phenotype: HashMap::new(),
+            receptor_transmitters: Vec::new(),
+        }
+    }
+
     #[inline]
     pub fn get_transmitter(&self) -> tokio::sync::mpsc::Sender<ControllerMessage>{
         self.tx.clone()
@@ -62,6 +76,13 @@ impl Controller {
         }
         
     }
+
+    #[inline]
+    fn ensure_phenotype(&mut self, pid: usize){
+        if !self.pid_to_phenotype.contains_key(&pid) {
+            self.pid_to_phenotype.insert(pid, Phenotype::new(pid, "".to_string()));
+        }
+    }
     
     #[inline]
     async fn tick(&mut self) {
@@ -69,11 +90,16 @@ impl Controller {
         let msg = msg.expect("WTF: rx must live same time as tx and tx same time as controller, but we recieved None!");
         match msg {
             ControllerMessage::PhenodataUpdate(pid, updates) => {
+                self.ensure_phenotype(pid);
                 self.handle_phenodata_updates(pid, updates).await;
             }
             ControllerMessage::UnsafeProcDetected(pid, confidence) => {}
             ControllerMessage::ProcDead(pid) => {
                 self.handle_dead_proc(pid).await;
+            }
+            ControllerMessage::NewProc(proc) => {
+                log::debug!("New process detected: {:?}", proc);
+                self.ensure_phenotype(proc.pid as usize);
             }
         }
     }
@@ -83,5 +109,12 @@ impl Controller {
         loop{
             self.tick().await;
         }
+    }
+}
+
+#[async_trait::async_trait]
+impl AsyncNotifier<Process> for tokio::sync::mpsc::Sender<ControllerMessage> {
+    async fn notify(&self, event: Process) {
+        self.send(ControllerMessage::NewProc(event)).await.unwrap()
     }
 }

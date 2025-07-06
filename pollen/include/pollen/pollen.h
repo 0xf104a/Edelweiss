@@ -68,6 +68,18 @@ static void (* const bpf_ringbuf_submit)(void *data, __u64 flags) = (void *) 132
  */
 static void *(* const bpf_ringbuf_reserve)(void *ringbuf, __u64 size, __u64 flags) = (void *) 131;
 
+/*
+ * bpf_get_current_pid_tgid
+ *
+ * 	Get the current pid and tgid.
+ *
+ * Returns
+ * 	A 64-bit integer containing the current tgid and pid, and
+ * 	created as such:
+ * 	*current_task*\ **->tgid << 32 \|**
+ */
+static __u64 (* const bpf_get_current_pid_tgid)(void) = (void *) 14;
+
 #ifndef bpf_printk
 #define bpf_printk(fmt, ...)                                       \
     ({                                                             \

@@ -1,10 +1,8 @@
 use std::collections::HashMap;
-use tokio::net::lookup_host;
 use crate::collector::PhenotypeUpdate;
 use crate::phenotype::Phenotype;
 use crate::receptor::ReceptorMessage;
-use crate::scanner::Process;
-use crate::utils::boxable::Boxed;
+use crate::scanner::{Process, ProcessEvent};
 use crate::utils::notifier::AsyncNotifier;
 
 ///
@@ -95,6 +93,7 @@ impl Controller {
             }
             ControllerMessage::UnsafeProcDetected(pid, confidence) => {}
             ControllerMessage::ProcDead(pid) => {
+                log::debug!("Process died: {:?}", pid);
                 self.handle_dead_proc(pid).await;
             }
             ControllerMessage::NewProc(proc) => {
@@ -104,7 +103,7 @@ impl Controller {
         }
     }
     
-    /// Run controller forevers
+    /// Runs controller forever
     pub async fn run(&mut self){
         loop{
             self.tick().await;
@@ -113,8 +112,15 @@ impl Controller {
 }
 
 #[async_trait::async_trait]
-impl AsyncNotifier<Process> for tokio::sync::mpsc::Sender<ControllerMessage> {
-    async fn notify(&self, event: Process) {
-        self.send(ControllerMessage::NewProc(event)).await.unwrap()
+impl AsyncNotifier<ProcessEvent> for tokio::sync::mpsc::Sender<ControllerMessage> {
+    async fn notify(&self, event: ProcessEvent) {
+        match event {
+            ProcessEvent::ProcessCreated(proc) => {
+                self.send(ControllerMessage::NewProc(proc)).await.unwrap();
+            }
+            ProcessEvent::ProcessExited(pid) => {
+                self.send(ControllerMessage::ProcDead(pid)).await.unwrap();
+            }
+        }
     }
 }

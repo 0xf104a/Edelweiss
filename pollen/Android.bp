@@ -1,7 +1,7 @@
 bpf {
-    name: "pollen_forkMonitor.o",
+    name: "pollen_procMonitor.o",
     include_dirs : ["external/Edelweiss/pollen/include"],
-    srcs: ["src/forkMonitor.c"],
+    srcs: ["src/procMonitor.c"],
     cflags: [
         "-DANDROID",
         "-Wall",

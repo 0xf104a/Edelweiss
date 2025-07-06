@@ -3,9 +3,13 @@
 
 #include <linux/bpf.h>
 
-typedef struct fork_event_t {
+#define PROC_FORK 1
+#define PROC_EXIT 2
+
+typedef struct proc_event_t {
+    __u32 type;
     __u32 pid;
     __u32 ppid;
-} fork_event_t;
+} proc_event_t;
 
 #endif

@@ -2,7 +2,7 @@ use crate::bpf::ringbuf::RingBufferStreamer;
 use crate::bpf::RingBuffer;
 use crate::bpf::streamer::Streamer;
 use crate::controller::Controller;
-use crate::scanner::{ForkEvent, ProcScanner, Process, BPF_MAP_PATH, BPF_TP_PROG_PATH};
+use crate::scanner::{ProcEvent, ProcScanner, Process, BPF_MAP_PATH, BPF_TP_PROG_PATH};
 use crate::scanner::filter::default::DefaultFilter;
 use crate::utils::startable::Starter;
 
@@ -60,7 +60,8 @@ async fn main() {
     setup_android_logging();
     log::info!("Starting edelweissd");
     let mut controller = Controller::new();
-    let scanner = ProcScanner::new(DefaultFilter::new(), controller.get_transmitter());
+    let scanner = ProcScanner::new(DefaultFilter::new(),
+                                   controller.get_transmitter());
     Starter::start(scanner);
     controller.run().await;
 }

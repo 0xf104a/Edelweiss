@@ -1,6 +1,6 @@
-use crate::scanner::{ForkEvent, ProcFilter};
+use crate::scanner::{ProcEvent, ProcFilter};
 
-/// Default filter that allows all events
+/// Default filter that allows all events to pass
 pub(crate) struct DefaultFilter{}
 
 impl DefaultFilter{
@@ -8,9 +8,10 @@ impl DefaultFilter{
         Self{}
     }
 }
+
 impl ProcFilter for DefaultFilter{
     #[inline]
-    fn filter(&self, event: ForkEvent) -> bool {
+    fn filter(&self, _event: ProcEvent) -> bool {
         true
     }
 }

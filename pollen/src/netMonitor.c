@@ -29,9 +29,9 @@ SEC("kprobe/inet_listen") int kprobe_inet_listen
     __u32 pid = pid_tgid & 0xFFFFFFFF;
     evt.pid = pid;
 
-    //struct sock* socket = (struct sock*)PT_REGS_PARM1(ctx);
     evt.port = sock->local_port;
-    evt.addr = sock->local_ip4;
+    evt.ip4_addr = sock->local_ip4;
+    __builtin_memcpy(&evt.ip6_addr, &sock->local_ip6, 16);
 
     void* buf = bpf_ringbuf_reserve(&net_events, sizeof(net_event_t), 0);
     if (buf) {

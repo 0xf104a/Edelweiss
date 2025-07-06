@@ -18,11 +18,11 @@ use crate::utils::startable::Startable;
 use crate::utils::tokio::{init_tokio, tokio_block_on};
 
 #[cfg(feature = "linux_bpf")]
-pub(crate) const BPF_MAP_PATH: &str = "/sys/fs/bpf/proc_events";
+const BPF_MAP_PATH: &str = "/sys/fs/bpf/proc_events";
 #[cfg(feature = "android_bpf")]
 pub(crate) const BPF_MAP_PATH: &str = "/sys/fs/bpf/map_procMonitor_proc_events";
 #[cfg(feature = "linux_bpf")]
-pub(crate) const BPF_TP_PROG_PATH: &str = "/sys/fs/bpf/pollenProc";
+const BPF_TP_PROG_PATH: &str = "/sys/fs/bpf/pollenProc";
 #[cfg(feature = "android_bpf")]
 pub(crate) const BPF_TP_PROG_PATH: &str = "/sys/fs/bpf/prog_procMonitor_tracepoint_sched_sched_process_fork";
 

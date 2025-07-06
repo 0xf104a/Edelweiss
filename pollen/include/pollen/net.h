@@ -10,21 +10,11 @@ typedef struct net_event_t {
     __u32 type;
     __u32 pid;
     __u32 port;
-    unsigned int addr;
+    __u32 remote_port;
+    __u32 ip4_addr;
+    __u32 ip6_addr[4];
+    __u32 remote_ip4;
+    __u32 remote_ip6[4];
 } net_event_t;
-
-struct sock_common {
-    unsigned short skc_family;
-    unsigned short skc_state;
-    int skc_bound_dev_if;
-    unsigned int skc_rcv_saddr;
-    unsigned int skc_daddr;
-    __be16 skc_num; // local port
-    __be16 skc_dport; // remote port (only valid for some sockets)
-};
-
-struct sock {
-    struct sock_common __sk_common;
-};
 
 #endif

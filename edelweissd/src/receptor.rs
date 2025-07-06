@@ -1,11 +1,13 @@
 use crate::controller::ControllerMessage;
 use crate::phenotype::Phenotype;
+use crate::utils::startable::Startable;
+use crate::utils::tokio::tokio_block_on;
 
-pub(crate) enum ReceptorMessage{
-    /// 
-    /// Phenotype key updated. 
+pub(crate) enum ReceptorMessage {
+    ///
+    /// Phenotype key updated.
     /// Stores trigger key and phenotype itself
-    /// 
+    ///
     PhenotypeUpdate(u64, Phenotype),
 
     ///
@@ -20,11 +22,11 @@ pub(crate) enum ReceptorMessage{
 /// reading files, calling NPU, etc. so it is marked as async_trait
 ///
 #[async_trait::async_trait]
-pub(crate) trait Receptor{
+pub(crate) trait Receptor {
     ///
     /// Tries to recognize harmful agent from its phenotype
     /// Returns confidence scaled from 0.0 to 1.0
-    /// 
+    ///
     async fn recognize(&mut self, phenotype: &Phenotype) -> f32;
 
     ///
@@ -36,8 +38,8 @@ pub(crate) trait Receptor{
 
 ///
 /// Stores a receptor and handles updates from controller
-/// 
-pub(crate) struct ReceptorHolder<T: Receptor>{
+///
+pub(crate) struct ReceptorHolder<T: Receptor> {
     receptor: T,
     controller_tx: tokio::sync::mpsc::Sender<ControllerMessage>,
     rx: tokio::sync::mpsc::Receiver<ReceptorMessage>,
@@ -45,35 +47,40 @@ pub(crate) struct ReceptorHolder<T: Receptor>{
     min_confidence: f32,
 }
 
-impl<T: Receptor> ReceptorHolder<T>{
-    async fn run(mut self) {
-        let need_check_keys = self.keys.len() > 0;
-        loop{
-            let msg = self.rx.recv().await;
-            if msg.is_none(){
-                // We're likely shutting down
-                break;
-            }
-            let msg = msg.unwrap();
-            match msg { 
-                ReceptorMessage::PhenotypeUpdate(key, phenotype) => {
-                    if need_check_keys{
-                        if !self.keys.contains(&key){
-                           continue; 
+impl<T: Receptor + Send + Sync + 'static> Startable for ReceptorHolder<T> {
+    fn run(&mut self) {
+        tokio_block_on(async {
+            let need_check_keys = self.keys.len() > 0;
+            loop {
+                let msg = self.rx.recv().await;
+                if msg.is_none() {
+                    // We're likely shutting down
+                    break;
+                }
+                let msg = msg.unwrap();
+                match msg {
+                    ReceptorMessage::PhenotypeUpdate(key, phenotype) => {
+                        if need_check_keys {
+                            if !self.keys.contains(&key) {
+                                continue;
+                            }
+                        }
+                        let confidence = self.receptor.recognize(&phenotype).await;
+                        if confidence > self.min_confidence {
+                            self.controller_tx
+                                .send(ControllerMessage::UnsafeProcDetected(
+                                    phenotype.pid,
+                                    confidence,
+                                ))
+                                .await
+                                .expect("Can not communicate with controller");
                         }
                     }
-                    let confidence = self.receptor.recognize(&phenotype).await;
-                    if confidence > self.min_confidence{
-                        self.controller_tx.send(
-                            ControllerMessage::UnsafeProcDetected(phenotype.pid, confidence))
-                            .await
-                            .expect("Can not communicate with controller");
+                    ReceptorMessage::ProcDead(pid) => {
+                        self.receptor.on_process_dead(pid).await;
                     }
                 }
-                ReceptorMessage::ProcDead(pid) => {
-                    self.receptor.on_process_dead(pid).await;
-                }
             }
-        }
+        });
     }
 }

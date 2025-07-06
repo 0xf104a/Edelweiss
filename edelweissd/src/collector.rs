@@ -1,5 +1,8 @@
+mod net;
+
 use crate::controller::ControllerMessage;
 use crate::utils::boxable::Boxed;
+use crate::utils::startable::Startable;
 
 ///
 /// Stores a single update of phenotype key
@@ -13,7 +16,7 @@ pub(crate) struct PhenotypeUpdate{
 ///
 /// A reader which inspects process for phenotype
 /// 
-pub(crate) trait PhenotypeCollector{
+pub(crate) trait PhenotypeCollector: Startable{
     ///
     /// This called when new process appears
     /// 

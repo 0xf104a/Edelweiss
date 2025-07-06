@@ -2,7 +2,7 @@ use crate::bpf::ringbuf::RingBufferStreamer;
 use crate::bpf::RingBuffer;
 use crate::bpf::streamer::Streamer;
 use crate::controller::Controller;
-use crate::scanner::{ProcEvent, ProcScanner, Process, BPF_MAP_PATH, BPF_TP_PROG_PATH};
+use crate::scanner::{ProcEvent, ProcScanner, Process};
 use crate::scanner::filter::default::DefaultFilter;
 use crate::utils::startable::Starter;
 

@@ -1,6 +1,9 @@
 bpf {
     name: "pollen_procMonitor.o",
-    include_dirs : ["external/Edelweiss/pollen/include"],
+    include_dirs : [
+	"external/Edelweiss/pollen/include",
+	"system/bpf/include/vmlinux/android15_6.6/x86_64",
+    ],
     srcs: ["src/procMonitor.c"],
     cflags: [
         "-DANDROID",
@@ -11,7 +14,10 @@ bpf {
 
 bpf {
     name: "pollen_netMonitor.o",
-    include_dirs : ["external/Edelweiss/pollen/include"],
+    include_dirs : [
+	"external/Edelweiss/pollen/include",
+    	"system/bpf/include/vmlinux/android15_6.6/x86_64",
+    ],
     srcs: ["src/netMonitor.c"],
     cflags: [
         "-DANDROID",

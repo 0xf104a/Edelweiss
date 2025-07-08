@@ -34,9 +34,55 @@ struct trace_event_raw_sched_process_fork {
     char child_comm[TASK_COMM_LEN];
     __u32 child_pid;
 };
+
+struct trace_entry {
+	short unsigned int type;
+	unsigned char flags;
+	unsigned char preempt_count;
+	int pid;
+};
+
+/* sys_enter tracepoints */
+struct trace_event_raw_sys_enter {
+	struct trace_entry ent;
+	long int id;
+	long unsigned int args[6];
+	char __data[0];
+};
+
+typedef short unsigned int __kernel_sa_family_t;
+typedef __kernel_sa_family_t sa_family_t;
+
+struct in_addr {
+	__be32 s_addr;
+};
+
+struct in6_addr {
+	union {
+		__u8 u6_addr8[16];
+		__be16 u6_addr16[8];
+		__be32 u6_addr32[4];
+	} in6_u;
+};
+
+struct sockaddr_in6 {
+	short unsigned int sin6_family;
+	__be16 sin6_port;
+	__be32 sin6_flowinfo;
+	struct in6_addr sin6_addr;
+	__u32 sin6_scope_id;
+};
+
+struct sockaddr_in {
+	__kernel_sa_family_t sin_family;
+	__be16 sin_port;
+	struct in_addr sin_addr;
+	unsigned char __pad[8];
+};
 #endif
 
 #ifdef ANDROID //Android does not have those functions in headers
+#include <pollen/bpf_endian.h>
 /**
  *  Perf event output function
  *  @see https://docs.ebpf.io/linux/helper-function/bpf_perf_event_output/
@@ -72,18 +118,6 @@ static void (* const bpf_ringbuf_submit)(void *data, __u64 flags) = (void *) 132
  * 	otherwise.
  */
 static void *(* const bpf_ringbuf_reserve)(void *ringbuf, __u64 size, __u64 flags) = (void *) 131;
-
-/*
- * bpf_get_current_pid_tgid
- *
- * 	Get the current pid and tgid.
- *
- * Returns
- * 	A 64-bit integer containing the current tgid and pid, and
- * 	created as such:
- * 	*current_task*\ **->tgid << 32 \|**
- */
-static __u64 (* const bpf_get_current_pid_tgid)(void) = (void *) 14;
 
 #ifndef bpf_printk
 #define bpf_printk(fmt, ...)                                       \

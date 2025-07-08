@@ -1,6 +1,7 @@
-#include <vmlinux.h>
-
-#ifndef ANDROID
+#ifdef ANDROID
+// Usually this is done by uniquitus bpf_helpers.h but on Android CO-RE programs can not use it
+#include <bpf_helpers.h>
+#else
 #include <bpf/bpf_helpers.h>
 #include <bpf/bpf_core_read.h>
 #include <bpf/bpf_endian.h>

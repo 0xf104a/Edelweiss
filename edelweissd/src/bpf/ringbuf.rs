@@ -6,7 +6,23 @@ use std::ffi::CString;
 use std::marker::PhantomData;
 use std::mem::MaybeUninit;
 use std::ptr::{null, null_mut};
+use crate::bpf::attach::attach_tracepoint;
 use crate::utils::tokio::init_tokio;
+
+#[derive(Clone)]
+pub(crate) struct RingBufferTracepoint{
+    pub tp_prog: String,
+    pub tp_point: String,
+}
+
+impl RingBufferTracepoint {
+    pub fn new(tp_prog: &str, tp_point: &str) -> Self {
+        RingBufferTracepoint {
+            tp_prog: tp_prog.to_string(),
+            tp_point: tp_point.to_string(),
+        }
+    }
+}
 
 #[derive(Clone)]
 pub(crate) struct RingBufferStreamer<
@@ -15,8 +31,7 @@ pub(crate) struct RingBufferStreamer<
 > {
     bpf_tp_prog_path: String,
     bpf_map_path: String,
-    bpf_tp_category: String,
-    bpf_tp_name: String,
+    points: Vec<RingBufferTracepoint>,
     consumer: T,
     phantom_data: PhantomData<K>,
 }
@@ -27,15 +42,13 @@ impl<K: Clone + Send + Sync, T: StreamerNotifier<K> + Clone + Send + Sync>
     pub fn new(
         bpf_tp_prog_path: String,
         bpf_map_path: String,
-        bpf_tp_category: String,
-        bpf_tp_name: String,
+        points: Vec<RingBufferTracepoint>,
         consumer: T,
     ) -> Self {
         RingBufferStreamer {
             bpf_tp_prog_path,
             bpf_map_path,
-            bpf_tp_category,
-            bpf_tp_name,
+            points,
             consumer,
             phantom_data: PhantomData,
         }
@@ -66,8 +79,6 @@ impl<K: Clone + Send + Sync, T: StreamerNotifier<K> + Clone + Send + Sync>
     unsafe fn run(&mut self) {
         let prog_path = CString::new(self.bpf_tp_prog_path.clone()).expect("CString::new failed");
         let map_path = CString::new(self.bpf_map_path.clone()).expect("CString::new failed");
-        let category = CString::new(self.bpf_tp_category.clone()).expect("CString::new failed");
-        let point = CString::new(self.bpf_tp_name.clone()).expect("CString::new failed");
         let prog_fd = bpf::bpf_obj_get(prog_path.as_ptr());
         if prog_fd == 0 {
             panic!("bpf_obj_get failed on prog");
@@ -77,11 +88,9 @@ impl<K: Clone + Send + Sync, T: StreamerNotifier<K> + Clone + Send + Sync>
         if map_fd == 0 {
             panic!("bpf_obj_get failed on map");
         }
-        #[cfg(feature = "android_bpf")]
-        {
-            let ret =
-                bpf::bpf_attach_tracepoint(prog_fd, category.as_ptr(), point.as_ptr());
-            std::thread::sleep(std::time::Duration::from_secs(5));
+
+        for point in &self.points {
+            attach_tracepoint(prog_fd, point.tp_prog.as_str(), point.tp_point.as_str());
         }
 
         let consumer_box: Box<T> = Box::new(self.consumer.clone());

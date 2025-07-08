@@ -1,6 +1,6 @@
 use std::future::Future;
 use libc::atoi;
-use crate::bpf::ringbuf::RingBufferStreamer;
+use crate::bpf::ringbuf::{RingBufferStreamer, RingBufferTracepoint};
 use crate::bpf::streamer::Streamer;
 use crate::controller::ControllerMessage;
 use crate::scanner::ProcEvent;
@@ -55,8 +55,8 @@ const BPF_TP_PROG_PATH: &str = "/sys/fs/bpf/pollenNet";
 #[cfg(feature = "android_bpf")]
 const BPF_TP_PROG_PATH: &str = "/sys/fs/bpf/prog_netMonitor_kprobe_inet_listen";
 
-const BPF_TP_CATEGORY: &str = "kprobe";
-const BPF_TP_NAME: &str = "inet_listen";
+const BPF_TP_CAT_SYSCALLS: &str = "syscalls";
+const BPF_TP_BIND: &str = "sys_enter_bind";
 
 impl NetPhenotypeCollector{
     pub fn new(controller_tx: tokio::sync::mpsc::Sender<ControllerMessage>) -> Self{
@@ -67,8 +67,9 @@ impl NetPhenotypeCollector{
             streamer: RingBufferStreamer::<NetEvent, tokio::sync::mpsc::Sender<NetEvent>>::new(
                 BPF_TP_PROG_PATH.to_string(),
                 BPF_MAP_PATH.to_string(),
-                BPF_TP_CATEGORY.to_string(),
-                BPF_TP_NAME.to_string(),
+                vec![
+                  RingBufferTracepoint::new(BPF_TP_CAT_SYSCALLS, BPF_TP_BIND),
+                ],
                 tx),
         }
     }

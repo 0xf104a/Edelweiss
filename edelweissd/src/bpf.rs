@@ -1,5 +1,6 @@
 pub mod streamer;
 pub mod ringbuf;
+mod attach;
 
 use libc::{epoll_event, size_t};
 

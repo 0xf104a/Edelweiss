@@ -12,7 +12,7 @@ pub(crate) struct ProcEvent {
     ppid: u32,
 }
 
-use crate::bpf::ringbuf::RingBufferStreamer;
+use crate::bpf::ringbuf::{RingBufferStreamer, RingBufferTracepoint};
 use crate::bpf::streamer::Streamer;
 use crate::utils::notifier::AsyncNotifier;
 use crate::utils::startable::Startable;
@@ -78,8 +78,10 @@ impl<T: ProcFilter + 'static, N: AsyncNotifier<ProcessEvent> + 'static> ProcScan
             streamer: RingBufferStreamer::<ProcEvent, tokio::sync::mpsc::Sender<ProcEvent>>::new(
                 BPF_TP_PROG_PATH.to_string(), 
                 BPF_MAP_PATH.to_string(), 
-                BPF_TP_CATEGORY.to_string(), 
-                BPF_TP_NAME.to_string(),
+                vec![
+                    RingBufferTracepoint::new(BPF_TP_CATEGORY, BPF_TP_NAME),
+                    RingBufferTracepoint::new(BPF_TP_CATEGORY, "sched_process_exit"),
+                ],
                 tx),
         }
     }

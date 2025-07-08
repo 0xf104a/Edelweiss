@@ -1,3 +1,5 @@
+#![feature(new_uninit)]
+
 use crate::bpf::ringbuf::RingBufferStreamer;
 use crate::bpf::RingBuffer;
 use crate::bpf::streamer::Streamer;
@@ -17,7 +19,7 @@ mod bpf;
 
 #[cfg(all(
     not(any(feature = "android_bpf", feature = "linux_bpf")),
-    not(all(feature = "android_bpf", feature = "linux_bpf"))
+    all(feature = "android_bpf", feature = "linux_bpf"),
 ))]
 compile_error!("Invalid BPF feature selection");
 
@@ -39,14 +41,18 @@ fn setup_env_logging() {
 
 #[cfg(all(debug_assertions, feature = "android_logging"))]
 fn setup_android_logging() {
-    android_log::LogBuilder::new()
+    android_logger::LogBuilder::new()
         .filter_level(log::LevelFilter::Trace)
         .init();
 }
 
 #[cfg(all(not(debug_assertions), feature = "android_logging"))]
 fn setup_android_logging() {
-    android_log::init(TAG);
+    android_logger::init_once(
+        android_logger::Config::default()
+        .with_max_level(log::LevelFilter::Trace)
+        .with_tag("edelweissd"),
+    );
 }
 
 ///

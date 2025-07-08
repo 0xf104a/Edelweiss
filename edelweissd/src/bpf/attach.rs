@@ -5,7 +5,7 @@ pub(super) unsafe fn attach_tracepoint(prog_fd: i32, category: &str, point: &str
     #[cfg(feature = "android_bpf")]
     {
         let ret =
-            bpf::bpf_attach_tracepoint(prog_fd, category.as_ptr(), point.as_ptr());
+            bpf::bpf_attach_tracepoint(prog_fd, category.as_ptr() as *const i8, point.as_ptr() as *const i8);
         log::debug!("attach tracepoint {}/{}: {}", category, point, ret);
         std::thread::sleep(std::time::Duration::from_secs(5));
     }

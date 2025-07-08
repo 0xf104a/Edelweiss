@@ -50,7 +50,7 @@ DEFINE_BPF_PROG("tracepoint/sched/sched_process_exit", AID_ROOT, AID_SYSTEM, tra
 #else
 SEC("tracepoint/sched/sched_process_exit") int tracepoint_sched_process_exit
 #endif
-(void* _ctx) { /* We do not need ctx as we use bpf call to get pid */
+(void* __unused _ctx) { /* We do not need ctx as we use bpf call to get pid */
     proc_event_t evt = {};
     POLLEN_INIT_EVENT(evt);
 

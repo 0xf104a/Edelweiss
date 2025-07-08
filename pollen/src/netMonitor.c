@@ -1,11 +1,11 @@
 #ifdef ANDROID
 #include <bpf_helpers.h>
 #else
+#include <vmlinux.h> /* Not real CO-RE, but might be useful to extract structures for the current kernel */
 #include <bpf/bpf_helpers.h>
 #include <bpf/bpf_core_read.h>
 #include <bpf/bpf_endian.h>
 #include <bpf/bpf_tracing.h>
-#include <vmlinux.h> /* Not real CO-RE, but might be useful to extract structures for the current kernel */
 #endif
 
 #include <pollen/pollen.h>

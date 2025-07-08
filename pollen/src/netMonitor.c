@@ -1,7 +1,7 @@
 #ifdef ANDROID
 #include <bpf_helpers.h>
 #else
-#include <vmlinux.h> /* Not real CO-RE, but might be useful to extract structures for the current kernel */
+#include <vmlinux.h>
 #include <bpf/bpf_helpers.h>
 #include <bpf/bpf_core_read.h>
 #include <bpf/bpf_endian.h>
@@ -14,21 +14,22 @@
 POLLEN_DEFINE_RINGBUF(net_events, 1 << 24);
 
 #ifdef ANDROID
-DEFINE_BPF_PROG("tracepoint/syscalls/sys_enter_bind", AID_ROOT, AID_SYSTEM, tracepoint_bind)
+DEFINE_BPF_PROG("kprobe/__sys_bind", AID_ROOT, AID_SYSTEM, kprobe_bind)
 #else
-SEC("tracepoint/syscalls/sys_enter_bind") int tracepoint_bind
+SEC("kprobe/__sys_bind")
+int kprobe_bind
 #endif
-(struct trace_event_raw_sys_enter* ctx){
+(struct pt_regs* ctx) {
     net_event_t evt = {};
     POLLEN_INIT_EVENT(evt);
 
     evt.type = NET_EVENT_BIND;
 
-    void *uaddr = (void *)ctx->args[1];
+    struct sockaddr *uaddr = (struct sockaddr*)PT_REGS_PARM2(ctx);
 
     if (!uaddr) {
 #if PRINTK
-        bpf_printk("tracepoint_bind: uaddr is NULL\n");
+        bpf_printk("kprobe_bind: uaddr is NULL\n");
 #endif
         return 0;
     }
@@ -41,8 +42,8 @@ SEC("tracepoint/syscalls/sys_enter_bind") int tracepoint_bind
         struct sockaddr_in sa4 = {};
         bpf_probe_read_user(&sa4, sizeof(sa4), uaddr);
 #if PRINTK
-        bpf_printk("tracepoint_bind: sa4.sin_addr.s_addr=%d\n", sa4.sin_addr.s_addr);
-        bpf_printk("tracepoint_bind: sa4.sin_port=%d\n", sa4.sin_port);
+        bpf_printk("kprobe_bind: sa4.sin_addr.s_addr=%d\n", sa4.sin_addr.s_addr);
+        bpf_printk("kprobe_bind: sa4.sin_port=%d\n", sa4.sin_port);
 #endif
         evt.port = bpf_ntohs(sa4.sin_port);
         evt.ip4_addr = sa4.sin_addr.s_addr;

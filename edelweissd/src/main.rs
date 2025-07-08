@@ -1,6 +1,7 @@
 use crate::bpf::ringbuf::RingBufferStreamer;
 use crate::bpf::RingBuffer;
 use crate::bpf::streamer::Streamer;
+use crate::collector::net::NetPhenotypeCollector;
 use crate::controller::Controller;
 use crate::scanner::{ProcEvent, ProcScanner, Process};
 use crate::scanner::filter::default::DefaultFilter;
@@ -62,6 +63,8 @@ async fn main() {
     let mut controller = Controller::new();
     let scanner = ProcScanner::new(DefaultFilter::new(),
                                    controller.get_transmitter());
+    let collector = NetPhenotypeCollector::new(controller.get_transmitter());
+    Starter::start(collector);
     Starter::start(scanner);
     controller.run().await;
 }

@@ -1,4 +1,4 @@
-mod net;
+pub(crate) mod net;
 
 use crate::controller::ControllerMessage;
 use crate::utils::boxable::Boxed;

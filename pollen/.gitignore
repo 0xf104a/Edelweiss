@@ -3,3 +3,5 @@ Makefile
 CMakeFiles
 CMakeCache.txt
 cmake_install.cmake
+*.pyc
+__pycache__

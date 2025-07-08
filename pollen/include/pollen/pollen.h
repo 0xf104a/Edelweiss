@@ -5,8 +5,10 @@
 #ifndef POLLEN_H
 #define POLLEN_H
 
+#ifndef __VMLINUX_H__
 #include <linux/sched.h>
 #include <linux/bpf.h>
+#endif
 
 #define POLLEN_TRACE_TAG "pollen" /* common tag for bpf_printk */
 
@@ -23,6 +25,7 @@
 #define POLLEN_PERF_SUBMIT(array, event) \
 	bpf_perf_event_output(ctx, array, BPF_F_CURRENT_CPU, event, sizeof(event));
 
+#ifndef __VMLINUX_H__
 /* Process fork */
 struct trace_event_raw_sched_process_fork {
     __u64 unused;
@@ -31,6 +34,7 @@ struct trace_event_raw_sched_process_fork {
     char child_comm[TASK_COMM_LEN];
     __u32 child_pid;
 };
+#endif
 
 #ifdef ANDROID //Android does not have those functions in headers
 /**
@@ -118,5 +122,12 @@ struct { \
 #else
 #define PRINTK 1
 #endif
+
+/**
+ * Put PID/UID to event
+ */
+#define POLLEN_INIT_EVENT(event)\
+    event.pid = bpf_get_current_pid_tgid() & 0xFFFFFFFF;\
+    event.uid = bpf_get_current_uid_gid();
 
 #endif //POLLEN_H

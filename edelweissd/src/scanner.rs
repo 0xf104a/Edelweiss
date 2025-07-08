@@ -8,6 +8,7 @@ pub mod filter;
 pub(crate) struct ProcEvent {
     event_type: u32,
     pid: u32,
+    uid: u32,
     ppid: u32,
 }
 

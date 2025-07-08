@@ -13,7 +13,10 @@ use crate::utils::tokio::tokio_block_on;
 struct NetEvent {
     pub event_type: u32,
     pub pid: u32,
-    pub port: u32,
+    pub uid: u32,
+    pub family: u32,
+    pub port: u16,
+    pub sock_type: u16,
     pub remote_port: u32,
     pub ip4_addr: u32,
     pub ip6_addr: [u32; 4],

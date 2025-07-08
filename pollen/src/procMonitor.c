@@ -20,6 +20,7 @@ SEC("tracepoint/sched/sched_process_fork") int tracepoint_sched_process_fork
 #endif
 (struct trace_event_raw_sched_process_fork* ctx) {
     proc_event_t evt = {};
+    POLLEN_INIT_EVENT(evt);
 
     evt.type = PROC_FORK;
     evt.ppid = ctx->pid;
@@ -51,13 +52,10 @@ SEC("tracepoint/sched/sched_process_exit") int tracepoint_sched_process_exit
 #endif
 (void* _ctx) { /* We do not need ctx as we use bpf call to get pid */
     proc_event_t evt = {};
-
-    __u64 pid_tgid = bpf_get_current_pid_tgid();
-    __u32 pid = pid_tgid & 0xFFFFFFFF;
+    POLLEN_INIT_EVENT(evt);
 
     evt.type = PROC_EXIT;
     evt.ppid = 0;
-    evt.pid = pid;
 
     void* buf = bpf_ringbuf_reserve(&proc_events, sizeof(proc_event_t), 0);
     if (buf) {

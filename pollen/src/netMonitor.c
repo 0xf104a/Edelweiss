@@ -1,10 +1,6 @@
-#include <linux/bpf.h>
-#include <linux/ptrace.h>
-#include <linux/socket.h>
+#include <vmlinux.h>
 
-#ifdef ANDROID
-#include <bpf_helpers.h>
-#else
+#ifndef ANDROID
 #include <bpf/bpf_helpers.h>
 #include <bpf/bpf_core_read.h>
 #include <bpf/bpf_endian.h>
@@ -17,33 +13,50 @@
 POLLEN_DEFINE_RINGBUF(net_events, 1 << 24);
 
 #ifdef ANDROID
-DEFINE_BPF_PROG("kprobe/inet_listen", AID_ROOT, AID_SYSTEM, kprobe_inet_listen)
+DEFINE_BPF_PROG("tracepoint/syscalls/sys_enter_bind", AID_ROOT, AID_SYSTEM, tracepoint_bind)
 #else
-SEC("kprobe/inet_listen") int kprobe_inet_listen
+SEC("tracepoint/syscalls/sys_enter_bind") int tracepoint_bind
 #endif
-(struct __sk_buff* sock){
+(struct trace_event_raw_sys_enter* ctx){
     net_event_t evt = {};
-    evt.type = NET_EVENT_LISTEN;
+    POLLEN_INIT_EVENT(evt);
 
-    __u64 pid_tgid = bpf_get_current_pid_tgid();
-    __u32 pid = pid_tgid & 0xFFFFFFFF;
-    evt.pid = pid;
+    evt.type = NET_EVENT_BIND;
 
-    evt.port = sock->local_port;
-    evt.ip4_addr = sock->local_ip4;
-    __builtin_memcpy(&evt.ip6_addr, &sock->local_ip6, 16);
+    void *uaddr = (void *)ctx->args[1];
 
-    void* buf = bpf_ringbuf_reserve(&net_events, sizeof(net_event_t), 0);
+    if (!uaddr) {
+#if PRINTK
+        bpf_printk("tracepoint_bind: uaddr is NULL\n");
+#endif
+        return 0;
+    }
+
+    sa_family_t family = 0;
+    bpf_probe_read_user(&family, sizeof(family), uaddr);
+    evt.family = family;
+
+    if (family == AF_INET) {
+        struct sockaddr_in sa4 = {};
+        bpf_probe_read_user(&sa4, sizeof(sa4), uaddr);
+#if PRINTK
+        bpf_printk("tracepoint_bind: sa4.sin_addr.s_addr=%d\n", sa4.sin_addr.s_addr);
+        bpf_printk("tracepoint_bind: sa4.sin_port=%d\n", sa4.sin_port);
+#endif
+        evt.port = bpf_ntohs(sa4.sin_port);
+        evt.ip4_addr = sa4.sin_addr.s_addr;
+    } else if (family == AF_INET6) {
+        struct sockaddr_in6 sa6 = {};
+        bpf_probe_read_user(&sa6, sizeof(sa6), uaddr);
+        evt.port = bpf_ntohs(sa6.sin6_port);
+        __builtin_memcpy(evt.ip6_addr, sa6.sin6_addr.in6_u.u6_addr32, sizeof(evt.ip6_addr));
+    }
+
+    void *buf = bpf_ringbuf_reserve(&net_events, sizeof(evt), 0);
     if (buf) {
         __builtin_memcpy(buf, &evt, sizeof(evt));
         bpf_ringbuf_submit(buf, 0);
     }
-
-#if PRINTK
-    if(!buf){
-        bpf_printk("kprobe_inet_listen: buf is NULL, perhaps bpf_ringbuf_reserve failure\n");
-    }
-#endif
 
     return 0;
 }

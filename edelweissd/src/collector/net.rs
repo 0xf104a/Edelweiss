@@ -68,7 +68,6 @@ impl NetPhenotypeCollector{
                 BPF_TP_PROG_PATH.to_string(),
                 BPF_MAP_PATH.to_string(),
                 vec![
-                  RingBufferTracepoint::new(BPF_TP_CAT_SYSCALLS, BPF_TP_BIND),
                 ],
                 tx),
         }

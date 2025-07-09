@@ -18,5 +18,5 @@ rust_binary {
     ],
     edition: "2021",
     srcs: ["src/main.rs",],
-    features: ["android_bpf", "android_logging"],
+    features: ["android_bpf", "android_logging", "legacy_compiler"],
 }

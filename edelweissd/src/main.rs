@@ -1,4 +1,4 @@
-#![feature(new_uninit)]
+#![cfg_attr(feature = "legacy_compiler", feature(new_uninit))]
 
 use crate::bpf::ringbuf::RingBufferStreamer;
 use crate::bpf::RingBuffer;

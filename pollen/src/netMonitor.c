@@ -14,10 +14,10 @@
 POLLEN_DEFINE_RINGBUF(net_events, 1 << 24);
 
 #ifdef ANDROID
-DEFINE_BPF_PROG("kprobe/__sys_bind", AID_ROOT, AID_SYSTEM, kprobe_bind)
+DEFINE_BPF_PROG("kprobe/__sys_bind", AID_ROOT, AID_SYSTEM, __sys_bind)
 #else
 SEC("kprobe/__sys_bind")
-int kprobe_bind
+int __sys_bind
 #endif
 (struct pt_regs* ctx) {
     net_event_t evt = {};
@@ -29,7 +29,7 @@ int kprobe_bind
 
     if (!uaddr) {
 #if PRINTK
-        bpf_printk("kprobe_bind: uaddr is NULL\n");
+        bpf_printk("__sys_bind: uaddr is NULL\n");
 #endif
         return 0;
     }
@@ -42,8 +42,8 @@ int kprobe_bind
         struct sockaddr_in sa4 = {};
         bpf_probe_read_user(&sa4, sizeof(sa4), uaddr);
 #if PRINTK
-        bpf_printk("kprobe_bind: sa4.sin_addr.s_addr=%d\n", sa4.sin_addr.s_addr);
-        bpf_printk("kprobe_bind: sa4.sin_port=%d\n", sa4.sin_port);
+        bpf_printk("__sys_bind: sa4.sin_addr.s_addr=%d\n", sa4.sin_addr.s_addr);
+        bpf_printk("__sys_bind: sa4.sin_port=%d\n", sa4.sin_port);
 #endif
         evt.port = bpf_ntohs(sa4.sin_port);
         evt.ip4_addr = sa4.sin_addr.s_addr;

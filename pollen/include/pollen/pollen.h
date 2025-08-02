@@ -83,6 +83,7 @@ struct sockaddr_in {
 
 #ifdef ANDROID //Android does not have those functions in headers
 #include <pollen/bpf_endian.h>
+#ifndef __POLLEN_BPF_FUNCS_DEFINED
 /**
  *  Perf event output function
  *  @see https://docs.ebpf.io/linux/helper-function/bpf_perf_event_output/
@@ -118,7 +119,7 @@ static void (* const bpf_ringbuf_submit)(void *data, __u64 flags) = (void *) 132
  * 	otherwise.
  */
 static void *(* const bpf_ringbuf_reserve)(void *ringbuf, __u64 size, __u64 flags) = (void *) 131;
-
+#endif
 #ifndef bpf_printk
 #define bpf_printk(fmt, ...)                                       \
     ({                                                             \

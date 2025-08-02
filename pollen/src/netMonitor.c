@@ -1,4 +1,8 @@
 #ifdef ANDROID
+#define __POLLEN_BPF_FUNCS_DEFINED
+#define __TARGET_ARCH_x86 //FIXME: Define in soong
+#include <linux/bpf.h>
+#include <bpf/bpf_tracing.h>
 #include <bpf_helpers.h>
 #else
 #include <vmlinux.h>
@@ -10,6 +14,7 @@
 
 #include <pollen/pollen.h>
 #include <pollen/net.h>
+#include <pollen/arch.h>
 
 POLLEN_DEFINE_RINGBUF(net_events, 1 << 24);
 
@@ -19,13 +24,13 @@ DEFINE_BPF_PROG("kprobe/__sys_bind", AID_ROOT, AID_SYSTEM, __sys_bind)
 SEC("kprobe/__sys_bind")
 int __sys_bind
 #endif
-(struct pt_regs* ctx) {
+(struct pt_regs* __unused ctx) {
     net_event_t evt = {};
     POLLEN_INIT_EVENT(evt);
 
     evt.type = NET_EVENT_BIND;
 
-    struct sockaddr *uaddr = (struct sockaddr*)PT_REGS_PARM2(ctx);
+    void* uaddr = (void*)PT_REGS_PARM2(ctx);
 
     if (!uaddr) {
 #if PRINTK

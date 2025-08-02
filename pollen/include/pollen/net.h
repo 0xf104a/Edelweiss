@@ -1,9 +1,10 @@
 #ifndef POLLEN_NET_H
 #define POLLEN_NET_H
-
+/**
 #ifndef __VMLINUX_H__
 #include <linux/bpf.h>
 #endif
+**/
 
 #ifndef AF_INET
 #define AF_INET 2

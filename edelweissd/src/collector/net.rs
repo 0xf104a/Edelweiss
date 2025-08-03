@@ -53,10 +53,10 @@ const BPF_MAP_PATH: &str = "/sys/fs/bpf/map_netMonitor_net_events";
 #[cfg(feature = "linux_bpf")]
 const BPF_TP_PROG_PATH: &str = "/sys/fs/bpf/pollenNet";
 #[cfg(feature = "android_bpf")]
-const BPF_TP_PROG_PATH: &str = "/sys/fs/bpf/prog_netMonitor_kprobe_inet_listen";
+const BPF_TP_PROG_PATH: &str = "/sys/fs/bpf/prog_netMonitor_kprobe___sys_bind";
 
-const BPF_TP_CAT_SYSCALLS: &str = "syscalls";
-const BPF_TP_BIND: &str = "sys_enter_bind";
+const BPF_TP_CAT_KPROBE: &str = "kprobe";
+const BPF_TP_BIND: &str = "__sys_bind";
 
 impl NetPhenotypeCollector{
     pub fn new(controller_tx: tokio::sync::mpsc::Sender<ControllerMessage>) -> Self{

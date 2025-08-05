@@ -9,17 +9,17 @@ bpf {
         "-Wall",
         "-Werror",
     ],
-    arch: {
-        x86: {
+    target: {
+        android_x86: {
             cflags: ["-D__TARGET_ARCH_x86"],
         },
-        x86_64: {
+        android_x86_64: {
             cflags: ["-D__TARGET_ARCH_x86"],
         },
-        arm64: {
+        android_arm64: {
             cflags: ["-D__TARGET_ARCH_arm64"],
         },
-        arm: {
+        android_arm: {
             cflags: ["-D__TARGET_ARCH_arm"],
         },
     },
@@ -36,17 +36,17 @@ bpf {
         "-Wall",
         "-Werror",
     ],
-    arch: {
-        x86: {
+    target : {
+        android_x86: {
             cflags: ["-D__TARGET_ARCH_x86"],
         },
-        x86_64: {
+        android_x86_64: {
             cflags: ["-D__TARGET_ARCH_x86"],
         },
-        arm64: {
+        android_arm64: {
             cflags: ["-D__TARGET_ARCH_arm64"],
         },
-        arm: {
+        android_arm: {
             cflags: ["-D__TARGET_ARCH_arm"],
         },
     },

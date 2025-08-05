@@ -17,7 +17,7 @@ pub(super) unsafe fn attach_kprobe(prog_fd: i32, attach_type: BpfProbeAttachType
     log::info!("Attach kprobe {}/{}@{} to FD {}", ev_name, fn_name, fn_offset, prog_fd);
     #[cfg(feature = "android_bpf")]
     {
-        let ret = bpf::bpf_attach_kprobe(prog_fd, attach_type as i32, ev_name.as_ptr() as *const i8,
+        let ret = bpf::bpf_attach_kprobe(prog_fd, attach_type, ev_name.as_ptr() as *const i8,
                                          fn_name.as_ptr() as *const i8, fn_offset, maxactive);
         log::debug!("complete: attach kprobe {}/{}@{}: {}", ev_name, fn_name, fn_offset, ret);
         std::thread::sleep(std::time::Duration::from_secs(5));

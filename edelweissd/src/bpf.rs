@@ -81,5 +81,5 @@ extern "C" {
         fn_name: *const std::ffi::c_char,
         fn_offset: u64,
         maxactive: std::ffi::c_int,
-    ) -> c_int;
+    ) -> std::ffi::c_int;
 }

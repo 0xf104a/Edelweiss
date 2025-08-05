@@ -54,7 +54,7 @@ const BPF_MAP_PATH: &str = "/sys/fs/bpf/map_netMonitor_net_events";
 #[cfg(feature = "linux_bpf")]
 const BPF_PROG_PATH: &str = "/sys/fs/bpf/pollenNet";
 #[cfg(feature = "android_bpf")]
-const BPF_TP_PROG_PATH: &str = "/sys/fs/bpf/prog_netMonitor_kprobe___sys_bind";
+const BPF_PROG_PATH: &str = "/sys/fs/bpf/prog_netMonitor_kprobe___sys_bind";
 
 const BPF_TP_CAT_KPROBE: &str = "kprobe";
 const BPF_FN_BIND: &str = "__sys_bind";

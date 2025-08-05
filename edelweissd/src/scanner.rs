@@ -31,7 +31,8 @@ const EVENT_TYPE_NEW: u32 = 1;
 const EVENT_TYPE_EXIT: u32 = 2;
 
 const BPF_TP_CATEGORY: &str = "sched";
-const BPF_TP_NAME: &str = "sched_process_fork";
+const BPF_TP_NAME_FORK: &str = "sched_process_fork";
+const BPF_TP_NAME_EXIT: &str = "sched_process_exit";
 
 /// Process filter trait. Used by scanner to filter out processes which are not for inspection
 /// like systemd on Linux or system processes on AOSP
@@ -63,7 +64,7 @@ pub(crate) enum ProcessEvent{
 
 pub(crate) struct ProcScanner<T: ProcFilter, N: AsyncNotifier<ProcessEvent>>{
     filter: T,
-    streamer: RingBufferStreamer<ProcEvent, tokio::sync::mpsc::Sender<ProcEvent>>,
+    streamer: RingBufferStreamer<ProcEvent, tokio::sync::mpsc::Sender<ProcEvent>, RingBufferTracepoint>,
     rx: tokio::sync::mpsc::Receiver<ProcEvent>,
     notifier: N,
 }
@@ -75,12 +76,12 @@ impl<T: ProcFilter + 'static, N: AsyncNotifier<ProcessEvent> + 'static> ProcScan
             filter,
             rx,
             notifier,
-            streamer: RingBufferStreamer::<ProcEvent, tokio::sync::mpsc::Sender<ProcEvent>>::new(
-                BPF_TP_PROG_PATH.to_string(), 
-                BPF_MAP_PATH.to_string(), 
+            streamer: RingBufferStreamer::new(
                 vec![
-                    RingBufferTracepoint::new(BPF_TP_CATEGORY, BPF_TP_NAME),
-                    RingBufferTracepoint::new(BPF_TP_CATEGORY, "sched_process_exit"),
+                    RingBufferTracepoint::new(BPF_TP_PROG_PATH, BPF_MAP_PATH,
+                                              BPF_TP_CATEGORY, BPF_TP_NAME_FORK),
+                    RingBufferTracepoint::new(BPF_TP_PROG_PATH, BPF_MAP_PATH,
+                                              BPF_TP_CATEGORY, BPF_TP_NAME_EXIT),
                 ],
                 tx),
         }

@@ -1,6 +1,7 @@
 use std::future::Future;
 use libc::atoi;
-use crate::bpf::ringbuf::{RingBufferStreamer, RingBufferTracepoint};
+use crate::bpf::BpfProbeAttachType;
+use crate::bpf::ringbuf::{RingBufferKprobePoint, RingBufferStreamer, RingBufferTracepoint};
 use crate::bpf::streamer::Streamer;
 use crate::controller::ControllerMessage;
 use crate::scanner::ProcEvent;
@@ -42,7 +43,7 @@ pub(crate) struct NetPhenotype {
 
 pub(crate) struct NetPhenotypeCollector {
     controller_tx: tokio::sync::mpsc::Sender<ControllerMessage>,
-    streamer: RingBufferStreamer<NetEvent, tokio::sync::mpsc::Sender<NetEvent>>,
+    streamer: RingBufferStreamer<NetEvent, tokio::sync::mpsc::Sender<NetEvent>, RingBufferKprobePoint>,
     rx: tokio::sync::mpsc::Receiver<NetEvent>,
 }
 
@@ -51,12 +52,16 @@ const BPF_MAP_PATH: &str = "/sys/fs/bpf/net_events";
 #[cfg(feature = "android_bpf")]
 const BPF_MAP_PATH: &str = "/sys/fs/bpf/map_netMonitor_net_events";
 #[cfg(feature = "linux_bpf")]
-const BPF_TP_PROG_PATH: &str = "/sys/fs/bpf/pollenNet";
+const BPF_PROG_PATH: &str = "/sys/fs/bpf/pollenNet";
 #[cfg(feature = "android_bpf")]
 const BPF_TP_PROG_PATH: &str = "/sys/fs/bpf/prog_netMonitor_kprobe___sys_bind";
 
 const BPF_TP_CAT_KPROBE: &str = "kprobe";
-const BPF_TP_BIND: &str = "__sys_bind";
+const BPF_FN_BIND: &str = "__sys_bind";
+const BPF_POLLEN_BIND_EVENT: &str = "pollenNet___sys_bind";
+const BPF_FN_OFFSET_ZERO: u64 = 0;
+const BPF_PROBE_ATTACH_TYPE: BpfProbeAttachType = BpfProbeAttachType::BpfProbeEntry;
+const BPF_PROBE_MAXACTIVE_UNUSED: i32 = 0;
 
 impl NetPhenotypeCollector{
     pub fn new(controller_tx: tokio::sync::mpsc::Sender<ControllerMessage>) -> Self{
@@ -64,10 +69,16 @@ impl NetPhenotypeCollector{
         Self{
             controller_tx,
             rx,
-            streamer: RingBufferStreamer::<NetEvent, tokio::sync::mpsc::Sender<NetEvent>>::new(
-                BPF_TP_PROG_PATH.to_string(),
-                BPF_MAP_PATH.to_string(),
+            streamer: RingBufferStreamer::<NetEvent, tokio::sync::mpsc::Sender<NetEvent>,
+                RingBufferKprobePoint>::new(
                 vec![
+                    RingBufferKprobePoint::new(BPF_PROG_PATH,
+                                               BPF_PROBE_ATTACH_TYPE,
+                                               BPF_POLLEN_BIND_EVENT,
+                                               BPF_FN_BIND,
+                                               BPF_FN_OFFSET_ZERO,
+                                               BPF_PROBE_MAXACTIVE_UNUSED,
+                                               BPF_MAP_PATH)
                 ],
                 tx),
         }

@@ -1,8 +1,7 @@
 bpf {
     name: "pollen_procMonitor.o",
     include_dirs : [
-	"external/Edelweiss/pollen/include",
-	"system/bpf/include/vmlinux/android15_6.6/x86_64",
+	    "external/Edelweiss/pollen/include",
     ],
     srcs: ["src/procMonitor.c"],
     cflags: [
@@ -10,13 +9,26 @@ bpf {
         "-Wall",
         "-Werror",
     ],
+    arch: {
+        x86: {
+            cflags: ["-D__TARGET_ARCH_x86"],
+        },
+        x86_64: {
+            cflags: ["-D__TARGET_ARCH_x86"],
+        },
+        arm64: {
+            cflags: ["-D__TARGET_ARCH_arm64"],
+        },
+        arm: {
+            cflags: ["-D__TARGET_ARCH_arm"],
+        },
+    },
 }
 
 bpf {
     name: "pollen_netMonitor.o",
     include_dirs : [
-	"external/Edelweiss/pollen/include",
-    	"system/bpf/include/vmlinux/android15_6.6/x86_64",
+	    "external/Edelweiss/pollen/include",
     ],
     srcs: ["src/netMonitor.c"],
     cflags: [
@@ -24,5 +36,19 @@ bpf {
         "-Wall",
         "-Werror",
     ],
+    arch: {
+        x86: {
+            cflags: ["-D__TARGET_ARCH_x86"],
+        },
+        x86_64: {
+            cflags: ["-D__TARGET_ARCH_x86"],
+        },
+        arm64: {
+            cflags: ["-D__TARGET_ARCH_arm64"],
+        },
+        arm: {
+            cflags: ["-D__TARGET_ARCH_arm"],
+        },
+    },
 }
 

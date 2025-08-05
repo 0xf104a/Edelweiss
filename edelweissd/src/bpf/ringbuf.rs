@@ -14,7 +14,7 @@ pub trait AttachPoint: Clone + Send + Sync{
     /// Attaches to point(e.g. tracepoint, krpobe)
     /// Returns map file descriptor
     ///
-    unsafe fn attach(&self) -> i32;
+    unsafe fn attach(&self, map_fd: i32) -> i32;
 }
 
 #[derive(Clone)]
@@ -49,7 +49,7 @@ impl RingBufferTracepoint {
 }
 
 impl AttachPoint for RingBufferTracepoint{
-    unsafe fn attach(&self) -> i32 {
+    unsafe fn attach(&self, mut map_fd: i32) -> i32 {
         log::debug!("Attaching tracepoint {}, map {}", self.bpf_tp_prog_path, self.bpf_map_path);
         let prog_path = CString::new(self.bpf_tp_prog_path.clone()).expect("CString::new failed");
         let map_path = CString::new(self.bpf_map_path.clone()).expect("CString::new failed");
@@ -57,7 +57,9 @@ impl AttachPoint for RingBufferTracepoint{
         if prog_fd == 0 {
             panic!("bpf_obj_get failed on prog");
         }
-        let map_fd = bpf::bpf_obj_get(map_path.as_ptr());
+        if map_fd == 0 {
+            map_fd = bpf::bpf_obj_get(map_path.as_ptr());
+        }
         log::trace!("map_fd={}, path={}", map_fd, self.bpf_map_path);
         if map_fd == 0 {
             panic!("bpf_obj_get failed on map");
@@ -83,7 +85,7 @@ impl RingBufferKprobePoint{
 }
 
 impl AttachPoint for RingBufferKprobePoint{
-    unsafe fn attach(&self) -> i32 {
+    unsafe fn attach(&self, mut map_fd: i32) -> i32 {
         log::debug!("Attaching kpropbe {}, map {}", self.kprobe_prog, self.kprobe_map);
         let prog_path = CString::new(self.kprobe_prog.clone()).expect("CString::new failed");
         let map_path = CString::new(self.kprobe_map.clone()).expect("CString::new failed");
@@ -91,7 +93,10 @@ impl AttachPoint for RingBufferKprobePoint{
         if prog_fd == 0 {
             panic!("bpf_obj_get failed on prog");
         }
-        let map_fd = bpf::bpf_obj_get(map_path.as_ptr());
+        if map_fd == 0 {
+            log::debug!("map_fd is 0, opening map");
+            map_fd = bpf::bpf_obj_get(map_path.as_ptr());
+        }
         log::trace!("map_fd={}, path={}", map_fd, self.kprobe_map);
         if map_fd == 0 {
             panic!("bpf_obj_get failed on map");
@@ -105,7 +110,9 @@ impl AttachPoint for RingBufferKprobePoint{
 ///
 /// Basic streamer for kernel ring buffer.
 /// Attaches to all points and streams data from single map.
-/// **Note:** All tracepoint should return same map fd
+/// While streamer stream from single map it may attach few
+/// tracpoints of same type to get different event from same
+/// BPF program set(i.e. same BPF listing)
 ///
 #[derive(Clone)]
 pub(crate) struct RingBufferStreamer<
@@ -158,11 +165,7 @@ impl<K: Clone + Send + Sync, T: StreamerNotifier<K> + Clone + Send + Sync, P: At
     unsafe fn run(&mut self) {
         let mut map_fd = 0;
         for point in &self.points {
-            let new_map_fd = point.attach();
-            if new_map_fd != map_fd && map_fd != 0{
-                panic!("All points should return same map fd for RingBufferStreamer");
-            }
-            map_fd = new_map_fd;
+            map_fd = point.attach(map_fd);
         }
         let consumer_box: Box<T> = Box::new(self.consumer.clone());
         let consumer_ptr = Box::into_raw(consumer_box) as *mut std::ffi::c_void;

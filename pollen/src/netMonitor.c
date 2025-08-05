@@ -1,6 +1,5 @@
 #ifdef ANDROID
-#define __POLLEN_BPF_FUNCS_DEFINED
-#define __TARGET_ARCH_x86 //FIXME: Define in soong
+#define __POLLEN_BPF_FUNCS_DEFINED /* We don't want pollen.h to redefine functions */
 #include <linux/bpf.h>
 #include <bpf/bpf_tracing.h>
 #include <bpf_helpers.h>

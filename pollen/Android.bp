@@ -1,54 +1,44 @@
-bpf {
-    name: "pollen_procMonitor.o",
-    include_dirs : [
-	    "external/Edelweiss/pollen/include",
-    ],
-    srcs: ["src/procMonitor.c"],
-    cflags: [
-        "-DANDROID",
-        "-Wall",
-        "-Werror",
-    ],
-    target: {
-        android_x86: {
-            cflags: ["-D__TARGET_ARCH_x86"],
-        },
-        android_x86_64: {
-            cflags: ["-D__TARGET_ARCH_x86"],
-        },
-        android_arm64: {
-            cflags: ["-D__TARGET_ARCH_arm64"],
-        },
-        android_arm: {
-            cflags: ["-D__TARGET_ARCH_arm"],
-        },
-    },
+soong_config_module_type {
+    name: "pollen_bpf",
+    module_type: "bpf",
+    config_namespace: "ANDROID",
+    value_variables: ["TARGET_ARCH"],
+    properties: ["cflags"],
 }
 
-bpf {
-    name: "pollen_netMonitor.o",
-    include_dirs : [
-	    "external/Edelweiss/pollen/include",
-    ],
-    srcs: ["src/netMonitor.c"],
-    cflags: [
-        "-DANDROID",
-        "-Wall",
-        "-Werror",
-    ],
-    target : {
-        android_x86: {
-            cflags: ["-D__TARGET_ARCH_x86"],
-        },
-        android_x86_64: {
-            cflags: ["-D__TARGET_ARCH_x86"],
-        },
-        android_arm64: {
-            cflags: ["-D__TARGET_ARCH_arm64"],
-        },
-        android_arm: {
-            cflags: ["-D__TARGET_ARCH_arm"],
-        },
+pollen_bpf {
+  name: "pollen_procMonitor.o",
+  include_dirs : [
+      "external/Edelweiss/pollen/include",
+  ],
+  srcs: ["src/procMonitor.c"],
+  soong_config_variables: {
+    TARGET_ARCH: {
+      cflags: [
+       "-DANDROID",
+       "-Wall",
+       "-Werror",
+       "-D__TARGET_ARCH_%s",
+      ]
     },
-}
+  },
+}     
+
+pollen_bpf {
+  name: "pollen_netMonitor.o",
+  include_dirs : [
+      "external/Edelweiss/pollen/include",
+  ],
+  srcs: ["src/netMonitor.c"],
+  soong_config_variables: {
+    TARGET_ARCH: {
+      cflags: [
+       "-DANDROID",
+       "-Wall",
+       "-Werror",
+       "-D__TARGET_ARCH_%s",
+      ]
+    },
+  },
+}     
 

@@ -4,6 +4,14 @@
 #ifndef __POLLEN_ARCH_H
 #define __POLLEN_ARCH_H
 
+/**
+ * AOSP due to Soong provides slightly different target architecture
+ * So next directive is to fix this
+ **/
+#ifdef __TARGET_ARCH_x86_64
+#define __TARGET_ARCH_x86
+#endif
+
 #if defined(__TARGET_ARCH_x86)
 struct pt_regs {
   unsigned long r15;

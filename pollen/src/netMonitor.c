@@ -1,3 +1,5 @@
+#include <pollen/arch.h> /* Helpful for determing architecture */
+
 #ifdef ANDROID
 #define __POLLEN_BPF_FUNCS_DEFINED /* We don't want pollen.h to redefine functions */
 #include <linux/bpf.h>
@@ -13,7 +15,6 @@
 
 #include <pollen/pollen.h>
 #include <pollen/net.h>
-#include <pollen/arch.h>
 
 POLLEN_DEFINE_RINGBUF(net_events, 1 << 24);
 
